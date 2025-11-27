@@ -78,7 +78,18 @@ def screenshot(
         return output_path
 
     except subprocess.CalledProcessError as e:
-        raise ScreenitshotError(f"Conversion failed: {e.stderr}") from e
+        # Parse error message from stderr
+        error_msg = e.stderr.strip()
+
+        # Extract meaningful error from npm CLI output
+        if "Error:" in error_msg:
+            # Get just the error line
+            for line in error_msg.split('\n'):
+                if line.startswith('Error:'):
+                    error_msg = line
+                    break
+
+        raise ScreenitshotError(f"Conversion failed: {error_msg}") from e
     except FileNotFoundError as e:
         raise ScreenitshotError(
             "npm package 'screenitshot' not found in PATH. "

@@ -41,7 +41,28 @@ program
       console.log(`  Format: ${result.format}`);
       console.log(`  Size: ${result.width}x${result.height}`);
     } catch (error) {
-      console.error('Error:', (error as Error).message);
+      const err = error as Error;
+
+      // User-friendly error messages
+      if (err.message.includes('ENOENT') || err.message.includes('no such file')) {
+        console.error(`Error: Input file not found: ${input}`);
+      } else if (err.message.includes('Unsupported file format')) {
+        console.error(`Error: ${err.message}`);
+        console.error('Supported formats: PDF');
+      } else if (err.message.includes('No template available')) {
+        console.error(`Error: Format not yet supported`);
+        console.error('Currently supported: PDF');
+      } else if (err.message.includes('page')) {
+        console.error(`Error: Invalid page number or page not found`);
+      } else {
+        console.error(`Error: ${err.message}`);
+
+        // Show stack trace in debug mode
+        if (process.env.DEBUG) {
+          console.error(err.stack);
+        }
+      }
+
       process.exit(1);
     }
   });

@@ -1,7 +1,8 @@
 import { chromium, type Page } from 'playwright';
-import { readFile } from 'fs/promises';
-import { resolve, dirname } from 'path';
+import { readFile, writeFile, unlink } from 'fs/promises';
+import { resolve, dirname, join } from 'path';
 import { fileURLToPath } from 'url';
+import { tmpdir } from 'os';
 import type { FileFormat, ScreenshotOptions, ScreenshotResult } from './types.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -23,6 +24,32 @@ export class Renderer {
     return path;
   }
 
+  private async prepareTemplate(
+    templatePath: string,
+    fileBase64: string,
+    pageNumber: number = 1
+  ): Promise<string> {
+    // Read original template
+    const template = await readFile(templatePath, 'utf-8');
+
+    // Replace placeholders
+    const modified = template
+      .replace(
+        /let fileBase64 = ['"]FILE_BASE64_PLACEHOLDER['"];/,
+        `let fileBase64 = '${fileBase64}';`
+      )
+      .replace(
+        /let pageNumber = PAGE_NUMBER_PLACEHOLDER;/,
+        `let pageNumber = ${pageNumber};`
+      );
+
+    // Write to temp file
+    const tempPath = join(tmpdir(), `screenitshot-${Date.now()}.html`);
+    await writeFile(tempPath, modified, 'utf-8');
+
+    return tempPath;
+  }
+
   async render(
     inputPath: string,
     format: FileFormat,
@@ -33,9 +60,12 @@ export class Renderer {
       format: imageFormat = 'png',
       width = 1920,
       height = 1080,
+      page: pageNumber = 1,
     } = options;
 
     const outputPath = output || inputPath.replace(/\.[^.]+$/, `.${imageFormat}`);
+
+    let tempTemplatePath: string | null = null;
 
     // Launch browser
     const browser = await chromium.launch({
@@ -47,15 +77,16 @@ export class Renderer {
         viewport: { width, height },
       });
 
-      // Load template
-      const templatePath = this.getTemplatePath(format);
-      await page.goto(`file://${templatePath}`);
-
-      // Inject file data
+      // Read and encode file as base64
       const fileData = await readFile(inputPath);
-      await page.evaluate((data) => {
-        (globalThis as any).fileData = data;
-      }, Array.from(fileData));
+      const fileBase64 = fileData.toString('base64');
+
+      // Prepare template with injected data
+      const templatePath = this.getTemplatePath(format);
+      tempTemplatePath = await this.prepareTemplate(templatePath, fileBase64, pageNumber);
+
+      // Load modified template
+      await page.goto(`file://${tempTemplatePath}`);
 
       // Wait for render complete
       await page.evaluate(() => {
@@ -71,6 +102,11 @@ export class Renderer {
 
       await browser.close();
 
+      // Clean up temp file
+      if (tempTemplatePath) {
+        await unlink(tempTemplatePath).catch(() => {});
+      }
+
       return {
         path: outputPath,
         format: imageFormat,
@@ -79,6 +115,12 @@ export class Renderer {
       };
     } catch (error) {
       await browser.close();
+
+      // Clean up temp file on error
+      if (tempTemplatePath) {
+        await unlink(tempTemplatePath).catch(() => {});
+      }
+
       throw error;
     }
   }

@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "pdfjs-dist": "4.0.379"
+    "pdfjs-dist": "^4.0.379"
   },
   "devDependencies": {
     "typescript": "^5.3.3",
