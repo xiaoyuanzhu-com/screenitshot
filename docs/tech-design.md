@@ -59,9 +59,30 @@ Each format has an HTML template that:
 // Templates expose this interface
 interface TemplateAPI {
   window.fileData: ArrayBuffer | string;  // Injected by renderer
-  window.renderComplete: Promise<void>;   // Resolves when ready
+  window.renderComplete: Promise<RenderMetadata>;  // Resolves when ready with metadata
+}
+
+interface RenderMetadata {
+  width: number;        // Rendered canvas width
+  height: number;       // Rendered canvas height
+  pageCount?: number;   // Total pages (for multi-page formats)
+  pageNumber: number;   // Current page rendered
+  scale: number;        // Scale factor used
 }
 ```
+
+**Communication Flow**:
+1. Page sets `window.renderComplete` to a Promise
+2. Playwright awaits the Promise via `page.evaluate()`
+3. Promise resolves with metadata when rendering completes
+4. Playwright resizes viewport to match rendered dimensions
+5. Screenshot captures exact content without cropping
+
+This approach is robust because:
+- No polling needed (Promise-based async/await)
+- Type-safe metadata exchange
+- Automatic viewport sizing based on actual content
+- Prevents race conditions (waits for true completion)
 
 ## Technology Stack
 
@@ -334,9 +355,31 @@ flowchart LR
 
 ## Configuration
 
+### Render Quality Control
+
+**Default Quality Settings** (High-quality by default):
+- **Viewport**: 1920×1080 (Full HD browser window)
+- **Scale Factor**: 2.0× (Retina/HiDPI rendering)
+- **Effective Resolution**: 3840×2160 canvas (4K quality)
+- **Output Format**: PNG (lossless)
+
+**Rationale**:
+- 2× scale ensures crisp text and sharp details
+- 1920×1080 viewport accommodates most document layouts
+- PNG preserves quality without compression artifacts
+- Users can override for specific needs (JPEG for smaller files, custom viewport sizes)
+
+**Quality vs Performance Tradeoffs**:
+- Higher scale (2×) = better quality but larger files and slower rendering
+- PDF pages render at their intrinsic size × scale factor
+- Browser viewport should match rendered canvas size to avoid cropping
+
+### User Customization Options
+
 Users can customize:
 - Output format (PNG, JPEG, WebP)
 - Resolution/viewport size
+- Scale factor (for quality control)
 - Page range (for multi-page documents)
 - Template override path
 
