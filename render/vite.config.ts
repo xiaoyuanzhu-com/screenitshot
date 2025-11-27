@@ -16,7 +16,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
-        pdf: resolve(__dirname, 'src/pdf.html'),
+        pdf: resolve(__dirname, 'pdf.html'),
       },
       output: {
         entryFileNames: 'assets/[name]-[hash].js',
