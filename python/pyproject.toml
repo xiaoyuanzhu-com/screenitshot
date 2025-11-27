@@ -1,0 +1,33 @@
+[project]
+name = "screenitshot"
+version = "0.1.0"
+description = "Convert various file formats to high-quality screenshots"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+keywords = ["screenshot", "pdf", "converter"]
+authors = [
+  {name = "screenitshot"}
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
+
+[project.scripts]
+screenitshot = "screenitshot.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/yourusername/screenitshot"
+Repository = "https://github.com/yourusername/screenitshot"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
