@@ -10,7 +10,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc && npm run copy-templates",
-    "copy-templates": "cp -r ../render/dist/src/templates/* templates/",
+    "copy-templates": "mkdir -p templates && cp ../render/dist/pdf.html templates/",
     "dev": "tsc --watch",
     "prepublishOnly": "npm run build"
   },

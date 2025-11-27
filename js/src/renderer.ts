@@ -1,9 +1,8 @@
 import { chromium, type Page } from 'playwright';
-import { readFile, writeFile, unlink } from 'fs/promises';
-import { resolve, dirname, join } from 'path';
+import { readFile } from 'fs/promises';
+import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { tmpdir } from 'os';
-import type { FileFormat, ScreenshotOptions, ScreenshotResult } from './types.js';
+import type { FileFormat, ScreenshotOptions, ScreenshotResult, RenderMetadata } from './types.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -24,30 +23,17 @@ export class Renderer {
     return path;
   }
 
-  private async prepareTemplate(
-    templatePath: string,
+  private async injectDataIntoPage(
+    page: Page,
     fileBase64: string,
     pageNumber: number = 1
-  ): Promise<string> {
-    // Read original template
-    const template = await readFile(templatePath, 'utf-8');
-
-    // Replace placeholders
-    const modified = template
-      .replace(
-        /let fileBase64 = ['"]FILE_BASE64_PLACEHOLDER['"];/,
-        `let fileBase64 = '${fileBase64}';`
-      )
-      .replace(
-        /let pageNumber = PAGE_NUMBER_PLACEHOLDER;/,
-        `let pageNumber = ${pageNumber};`
-      );
-
-    // Write to temp file
-    const tempPath = join(tmpdir(), `screenitshot-${Date.now()}.html`);
-    await writeFile(tempPath, modified, 'utf-8');
-
-    return tempPath;
+  ): Promise<void> {
+    // Inject data into page globals before template loads
+    await page.addInitScript(({ fileBase64: fb64, pageNum }: { fileBase64: string; pageNum: number }) => {
+      // Override the placeholder values
+      (globalThis as any).fileBase64 = fb64;
+      (globalThis as any).pageNumber = pageNum;
+    }, { fileBase64, pageNum: pageNumber });
   }
 
   async render(
@@ -65,8 +51,6 @@ export class Renderer {
 
     const outputPath = output || inputPath.replace(/\.[^.]+$/, `.${imageFormat}`);
 
-    let tempTemplatePath: string | null = null;
-
     // Launch browser
     const browser = await chromium.launch({
       headless: true,
@@ -81,19 +65,32 @@ export class Renderer {
       const fileData = await readFile(inputPath);
       const fileBase64 = fileData.toString('base64');
 
-      // Prepare template with injected data
+      // Inject data before loading template
+      await this.injectDataIntoPage(page, fileBase64, pageNumber);
+
+      // Load template
       const templatePath = this.getTemplatePath(format);
-      tempTemplatePath = await this.prepareTemplate(templatePath, fileBase64, pageNumber);
+      await page.goto(`file://${templatePath}`);
 
-      // Load modified template
-      await page.goto(`file://${tempTemplatePath}`);
+      // Wait for render complete and get metadata
+      const metadata = await page.evaluate(async () => {
+        const renderComplete = (globalThis as any).renderComplete;
 
-      // Wait for render complete
-      await page.evaluate(() => {
-        return (globalThis as any).renderComplete;
+        if (!renderComplete) {
+          throw new Error('window.renderComplete not found');
+        }
+
+        // Await the promise to get metadata
+        return await renderComplete;
       });
 
-      // Take screenshot
+      // Resize viewport to match actual rendered content
+      await page.setViewportSize({
+        width: metadata.width,
+        height: metadata.height,
+      });
+
+      // Take screenshot at exact rendered size
       await page.screenshot({
         path: outputPath,
         type: imageFormat as 'png' | 'jpeg',
@@ -102,25 +99,14 @@ export class Renderer {
 
       await browser.close();
 
-      // Clean up temp file
-      if (tempTemplatePath) {
-        await unlink(tempTemplatePath).catch(() => {});
-      }
-
       return {
         path: outputPath,
         format: imageFormat,
-        width,
-        height,
+        width: metadata.width,
+        height: metadata.height,
       };
     } catch (error) {
       await browser.close();
-
-      // Clean up temp file on error
-      if (tempTemplatePath) {
-        await unlink(tempTemplatePath).catch(() => {});
-      }
-
       throw error;
     }
   }

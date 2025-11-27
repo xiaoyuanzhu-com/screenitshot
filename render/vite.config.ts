@@ -1,11 +1,13 @@
 import { defineConfig } from 'vite';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { viteSingleFile } from 'vite-plugin-singlefile';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export default defineConfig({
+  plugins: [viteSingleFile()], // Inline all JS/CSS into HTML
   optimizeDeps: {
     esbuildOptions: {
       target: 'esnext',
@@ -14,13 +16,7 @@ export default defineConfig({
   build: {
     target: 'esnext',
     rollupOptions: {
-      input: {
-        main: resolve(__dirname, 'index.html'),
-        pdf: resolve(__dirname, 'pdf.html'),
-      },
-      output: {
-        entryFileNames: 'assets/[name]-[hash].js',
-      },
+      input: resolve(__dirname, 'pdf.html'), // Build only PDF template for now
     },
   },
 });

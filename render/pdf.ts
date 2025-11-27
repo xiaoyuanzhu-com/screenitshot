@@ -4,16 +4,25 @@ import workerSrc from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 // Set worker path (bundled locally by Vite)
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
 
-// Placeholder values that get replaced by renderer
+// Placeholder values - will be injected by Playwright before page loads
 const FILE_BASE64_PLACEHOLDER = 'FILE_BASE64_PLACEHOLDER';
 const PAGE_NUMBER_PLACEHOLDER = 1;
 
-let fileBase64 = FILE_BASE64_PLACEHOLDER;
-let pageNumber = PAGE_NUMBER_PLACEHOLDER;
+// Check if values were injected via Playwright, otherwise use placeholders
+let fileBase64 = (globalThis as any).fileBase64 || FILE_BASE64_PLACEHOLDER;
+let pageNumber = (globalThis as any).pageNumber || PAGE_NUMBER_PLACEHOLDER;
+
+interface RenderMetadata {
+  width: number;
+  height: number;
+  pageCount: number;
+  pageNumber: number;
+  scale: number;
+}
 
 declare global {
   interface Window {
-    renderComplete: Promise<void>;
+    renderComplete: Promise<RenderMetadata>;
   }
 }
 
@@ -67,7 +76,7 @@ function showFileSelector() {
 }
 
 // Main rendering function
-async function renderPDF() {
+async function renderPDF(): Promise<RenderMetadata> {
   try {
     const canvas = document.getElementById('pdf-canvas') as HTMLCanvasElement;
     if (!canvas) {
@@ -77,7 +86,14 @@ async function renderPDF() {
     // Check if placeholder value (local testing mode)
     if (fileBase64 === FILE_BASE64_PLACEHOLDER) {
       showFileSelector();
-      return;
+      // Return dummy metadata for local testing
+      return {
+        width: 1920,
+        height: 1080,
+        pageCount: 1,
+        pageNumber: 1,
+        scale: 2.0
+      };
     }
 
     // Convert base64 to Uint8Array
@@ -93,7 +109,8 @@ async function renderPDF() {
     // Use configured page number
     const page = await pdf.getPage(pageNumber);
 
-    const viewport = page.getViewport({ scale: 2.0 });
+    const scale = 2.0;
+    const viewport = page.getViewport({ scale });
     const context = canvas.getContext('2d');
 
     if (!context) {
@@ -110,6 +127,15 @@ async function renderPDF() {
 
     await page.render(renderContext).promise;
     console.log('PDF rendered successfully');
+
+    // Return metadata for Playwright to resize viewport
+    return {
+      width: Math.ceil(viewport.width),
+      height: Math.ceil(viewport.height),
+      pageCount: pdf.numPages,
+      pageNumber: pageNumber,
+      scale: scale
+    };
   } catch (error) {
     console.error('Error rendering PDF:', error);
     throw error;

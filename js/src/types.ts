@@ -13,4 +13,12 @@ export interface ScreenshotResult {
   height: number;
 }
 
+export interface RenderMetadata {
+  width: number;
+  height: number;
+  pageCount: number;
+  pageNumber: number;
+  scale: number;
+}
+
 export type FileFormat = 'pdf' | 'epub' | 'docx' | 'unknown';
