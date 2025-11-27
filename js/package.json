@@ -1,0 +1,37 @@
+{
+  "name": "screenitshot",
+  "version": "0.1.0",
+  "description": "Convert various file formats to high-quality screenshots",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "screenitshot": "dist/cli.js"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "tsc && npm run copy-templates",
+    "copy-templates": "cp -r ../render/dist/src/templates/* templates/",
+    "dev": "tsc --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "screenshot",
+    "pdf",
+    "converter",
+    "playwright",
+    "chromium"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "playwright": "^1.40.1",
+    "commander": "^11.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
