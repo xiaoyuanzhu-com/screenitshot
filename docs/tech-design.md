@@ -120,41 +120,116 @@ Vite bundles into self-contained HTML with inlined/bundled JS.
 
 ```
 screenitshot/                  # Monorepo
-├── packages/
-│   ├── core/                  # npm package (primary implementation)
-│   │   ├── package.json
-│   │   ├── vite.config.ts     # Build config for templates
-│   │   ├── tsconfig.json
-│   │   ├── src/
-│   │   │   ├── cli.ts         # Node.js CLI
-│   │   │   ├── api.ts         # Programmatic API
-│   │   │   ├── renderer.ts    # Browser automation
-│   │   │   ├── templates/
-│   │   │   │   ├── pdf.html   # Template HTML
-│   │   │   │   ├── pdf.ts     # Template logic (ES6)
-│   │   │   │   ├── epub.html
-│   │   │   │   └── epub.ts
-│   │   │   └── test/
-│   │   │       └── upload.html # Dev test harness
-│   │   └── dist/              # Built artifacts
-│   │       └── templates/     # Bundled HTML files
-│   │
-│   ├── python/                # Python binding
-│   │   ├── pyproject.toml
-│   │   └── screenitshot/
-│   │       ├── __init__.py
-│   │       └── cli.py         # Thin wrapper calling npm package
-│   │
-│   └── go/                    # Future: Go binding
-│       └── ...
+├── render/                    # Vite project for templates
+│   ├── package.json
+│   ├── vite.config.ts         # Multi-page build config
+│   ├── tsconfig.json
+│   ├── src/
+│   │   ├── templates/
+│   │   │   ├── pdf.html       # PDF template
+│   │   │   ├── pdf.ts         # PDF rendering logic
+│   │   │   ├── epub.html      # EPUB template (future)
+│   │   │   └── epub.ts
+│   │   └── test/
+│   │       └── index.html     # Upload test page
+│   └── dist/                  # Built output: html + js per format
+│       ├── pdf.html
+│       ├── assets/
+│       │   └── pdf-*.js
+│       └── test.html
+│
+├── js/                        # Node.js package & CLI
+│   ├── package.json           # npm: screenitshot
+│   ├── tsconfig.json
+│   ├── src/
+│   │   ├── index.ts           # Programmatic API
+│   │   ├── cli.ts             # CLI entry point
+│   │   ├── renderer.ts        # Playwright browser automation
+│   │   ├── detector.ts        # Format detection
+│   │   └── types.ts           # Shared types
+│   ├── templates/             # Copied from render/dist/ at build time
+│   │   └── pdf.html
+│   └── dist/                  # Compiled JS
+│
+├── python/                    # Python binding
+│   ├── pyproject.toml         # PyPI: screenitshot
+│   ├── screenitshot/
+│   │   ├── __init__.py        # Programmatic API
+│   │   └── cli.py             # CLI entry point
+│   └── README.md
 │
 └── docker/
-    └── Dockerfile             # Uses npm package directly
+    ├── Dockerfile             # Based on npm package
+    └── README.md
 ```
 
 ## Build & Distribution
 
-### Primary: npm Package
+### Build Process
+
+```mermaid
+flowchart LR
+    A[render/ Vite build] --> B[dist/pdf.html + js]
+    B --> C[Copy to js/templates/]
+    C --> D[js/ TypeScript build]
+    D --> E[npm package ready]
+    E --> F1[Publish to npm]
+    E --> F2[Use in Docker]
+
+    G[python/ wrapper] --> H[Publish to PyPI]
+```
+
+**Steps**:
+1. `cd render && npm run build` → produces `dist/pdf.html` (bundled)
+2. Copy `render/dist/*.html` to `js/templates/`
+3. `cd js && npm run build` → produces CLI + API
+4. Publish `js/` to npm
+5. Docker uses npm package from registry
+
+### Unified Package Interface
+
+All implementations (npm, PyPI, Docker) share the same interface:
+
+**CLI usage**:
+```bash
+# All platforms
+screenitshot <input> [output] [options]
+
+# Examples
+screenitshot document.pdf                    # → document.png
+screenitshot document.pdf output.png         # → output.png
+screenitshot document.pdf --format jpeg      # → document.jpg
+screenitshot document.pdf --width 1920       # Custom viewport
+```
+
+**Programmatic API**:
+```typescript
+// Node.js (js/)
+import { screenshot } from 'screenitshot';
+
+await screenshot('file.pdf', {
+  output: 'output.png',
+  format: 'png' | 'jpeg' | 'webp',
+  width: 1920,
+  height: 1080,
+  page: 1  // For multi-page documents
+});
+```
+
+```python
+# Python (python/)
+from screenitshot import screenshot
+
+screenshot('file.pdf',
+  output='output.png',
+  format='png',  # 'png' | 'jpeg' | 'webp'
+  width=1920,
+  height=1080,
+  page=1
+)
+```
+
+### npm Package
 
 **Package**: `screenitshot` on npm
 
@@ -163,64 +238,79 @@ npm install -g screenitshot
 screenitshot file.pdf output.png
 ```
 
-**Programmatic usage**:
-```typescript
-import { screenshot } from 'screenitshot';
-await screenshot('file.pdf', { output: 'output.png' });
+**Contents**:
+- CLI binary
+- Programmatic API
+- Bundled templates (from `render/dist/`)
+- Playwright + Chromium (auto-installed)
+
+### Python Binding
+
+**Package**: `screenitshot` on PyPI
+
+```bash
+pip install screenitshot
+screenitshot file.pdf output.png
 ```
 
-### Language Bindings
+**Implementation**: Thin wrapper calling npm package CLI
 
-Language bindings are **thin wrappers** that invoke the npm package CLI or spawn Node.js process.
-
-#### Python Binding
-
-**Installation**: `pip install screenitshot`
-
-**Implementation approach**:
 ```python
-# screenitshot/__init__.py
+# python/screenitshot/__init__.py
 import subprocess
 import shutil
+from typing import Optional
 
-def screenshot(input_file: str, output: str = None):
+def screenshot(
+    input_file: str,
+    output: Optional[str] = None,
+    format: str = 'png',
+    width: int = 1920,
+    height: int = 1080,
+    page: int = 1
+):
     """Thin wrapper calling npm package"""
-    npm_cli = shutil.which('screenitshot')  # From npm install -g
+    npm_cli = shutil.which('screenitshot')
     if not npm_cli:
-        raise RuntimeError("npm package 'screenitshot' not found. Install: npm install -g screenitshot")
+        raise RuntimeError(
+            "npm package 'screenitshot' not found. "
+            "Install: npm install -g screenitshot"
+        )
 
-    subprocess.run([npm_cli, input_file, output], check=True)
+    args = [npm_cli, input_file]
+    if output:
+        args.append(output)
+    args.extend(['--format', format, '--width', str(width)])
+
+    subprocess.run(args, check=True)
 ```
 
-**Requirements**:
-- User must have Node.js and npm package installed
-- Python package is just a convenience wrapper
-- Or bundle Node.js binary (like pkg/nexe)
+**Requirements**: User must have Node.js and npm package installed
 
-#### Future Bindings (Go, Rust, etc.)
+### Docker Distribution
 
-Same pattern: thin wrapper calling the npm package.
-
-### Docker Distribution (Default)
+**Image**: `screenitshot/screenitshot` (or your registry)
 
 ```dockerfile
 FROM node:20-slim
 
-# Install chromium dependencies
+# Install system dependencies for Chromium
 RUN apt-get update && apt-get install -y \
-    chromium \
+    ca-certificates \
+    fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 
 # Install npm package globally
 RUN npm install -g screenitshot && \
-    npx playwright install chromium
+    npx playwright install --with-deps chromium
 
+WORKDIR /app
 ENTRYPOINT ["screenitshot"]
 ```
 
 **Usage**:
 ```bash
-docker run screenitshot file.pdf output.png
+docker run -v $(pwd):/app screenitshot /app/file.pdf /app/output.png
 ```
 
 ## Rendering Flow
@@ -307,9 +397,72 @@ Playwright's Chromium includes necessary codecs (H.264, AAC) and renders identic
 
 **Result**: Plain HTML + TypeScript compiled by Vite = minimal, fast templates
 
+## Implementation Plan
+
+### Phase 1: PDF Support (MVP)
+
+**Goal**: Working PDF → screenshot pipeline
+
+**Tasks**:
+1. **render/** - Vite project
+   - Setup Vite multi-page config
+   - Create `pdf.html` + `pdf.ts` using PDF.js
+   - Create `test/index.html` upload page
+   - Build and verify output
+
+2. **js/** - Node.js package
+   - Setup TypeScript + Playwright
+   - Implement format detector (PDF only)
+   - Implement renderer (launch browser, inject file, screenshot)
+   - Implement CLI
+   - Implement programmatic API
+   - Copy templates from `render/dist/`
+
+3. **python/** - Python binding
+   - Setup pyproject.toml
+   - Implement thin wrapper CLI
+   - Implement thin wrapper API
+
+4. **docker/** - Docker image
+   - Create Dockerfile based on npm package
+   - Test with sample PDF
+
+**Acceptance Criteria**:
+```bash
+# npm
+npm install -g screenitshot
+screenitshot test.pdf test.png  # Works!
+
+# Python
+pip install screenitshot
+screenitshot test.pdf test.png  # Works!
+
+# Docker
+docker run screenitshot test.pdf test.png  # Works!
+
+# Programmatic
+import { screenshot } from 'screenitshot';
+await screenshot('test.pdf', { output: 'test.png' });  # Works!
+```
+
+### Phase 2: Additional Formats
+
+- EPUB support
+- DOCX support (via mammoth.js or docx-preview)
+- Markdown support
+- HTML support
+
+### Phase 3: Advanced Features
+
+- Multi-page rendering (generate multiple images or PDF)
+- Custom CSS injection
+- Template marketplace/registry
+- Parallel batch processing
+
 ## Future Considerations
 
 - Template caching for performance
 - Parallel processing for batch operations
 - Custom template plugin system
 - Template marketplace/registry
+- Go/Rust bindings
