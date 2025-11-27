@@ -1,10 +1,46 @@
-# Python-generated files
+# Node
+node_modules/
+*.log
+
+# Python
 __pycache__/
 *.py[oc]
+*.py[cod]
+*$py.class
+*.so
+.Python
 build/
 dist/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
 wheels/
 *.egg-info
+.installed.cfg
+*.egg
 
 # Virtual environments
 .venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+render/dist/
+js/dist/
+js/templates/
+
+# Test files
+test*.pdf
+test*.png
+test*.jpg
+*.test.*
