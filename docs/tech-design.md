@@ -7,6 +7,8 @@
 **Core implementation**: Node.js package (primary)
 **Language bindings**: Python, and potentially other languages (Go, Rust, etc.)
 
+**Current Status**: Phase 1 MVP completed - PDF support fully functional across all platforms (npm, Python, Docker)
+
 ## Architecture
 
 ```mermaid
@@ -55,21 +57,45 @@ Each format has an HTML template that:
 4. Signals ready state for screenshot capture
 5. Supports both Playwright automation and manual testing modes
 
-**Full specification**: See [render/RENDERER_SPEC.md](../render/RENDERER_SPEC.md) for complete interface requirements and implementation guide.
+## Renderer Specification
 
-**Template interface**:
+This section defines the interface requirements for all renderer pages (e.g., `pdf.html`, `epub.html`, etc.).
+
+### Renderer Overview
+
+Each renderer page is a self-contained HTML file that:
+1. Renders a specific file format to a canvas
+2. Works in both **manual testing mode** (file upload) and **Playwright automation mode**
+3. Returns metadata via a Promise-based callback
+
+### Required Interface
+
+#### 1. Global Variables (Input)
+
+Each renderer must read these values from `globalThis`:
+
 ```typescript
-// Global variables (input from Playwright)
+// Data injected by Playwright via page.addInitScript()
+// Falls back to placeholders for manual testing mode
 let fileBase64 = (globalThis as any).fileBase64 || 'FILE_BASE64_PLACEHOLDER';
-let pageNumber = (globalThis as any).pageNumber || 1;
+let pageNumber = (globalThis as any).pageNumber || 1; // or other params as needed
+```
 
-// Window API (output to Playwright)
+**Naming Convention**:
+- Use `*_PLACEHOLDER` constants for placeholder values
+- Check if value equals placeholder to detect manual testing mode
+
+#### 2. Window API (Output)
+
+Each renderer must expose this Promise on `window`:
+
+```typescript
 interface RenderMetadata {
-  width: number;        // Rendered canvas width
-  height: number;       // Rendered canvas height
-  pageCount: number;    // Total pages (for multi-page formats)
-  pageNumber: number;   // Current page rendered
-  scale: number;        // Scale factor used
+  width: number;        // Rendered canvas width in pixels
+  height: number;       // Rendered canvas height in pixels
+  pageCount: number;    // Total pages/items in document
+  pageNumber: number;   // Current page/item being rendered
+  scale: number;        // Scale factor used (e.g., 2.0 for HiDPI)
 }
 
 declare global {
@@ -78,8 +104,64 @@ declare global {
   }
 }
 
-// Set on page load
+// Set immediately on page load
 window.renderComplete = renderDocument();
+```
+
+**Promise Resolution**:
+- ✅ Resolve with `RenderMetadata` when rendering is complete
+- ❌ Never reject - handle errors internally and show UI feedback
+- ⏱️ Playwright waits for this Promise before taking screenshot
+
+#### 3. Dual Mode Support
+
+Each renderer must support **two modes**:
+
+**Mode 1: Playwright Automation (Production)**
+- `fileBase64` is injected via `page.addInitScript()`
+- Render automatically on page load
+- Return accurate metadata
+
+```typescript
+async function renderDocument(): Promise<RenderMetadata> {
+  // fileBase64 will be injected by Playwright
+  const bytes = base64ToUint8Array(fileBase64);
+
+  // ... render logic ...
+
+  return {
+    width: actualWidth,
+    height: actualHeight,
+    pageCount: totalPages,
+    pageNumber: currentPage,
+    scale: scaleUsed
+  };
+}
+```
+
+**Mode 2: Manual Testing (Development)**
+- Detect placeholder value
+- Show file upload UI
+- Allow local testing without Playwright
+
+```typescript
+async function renderDocument(): Promise<RenderMetadata> {
+  // Check if running in manual testing mode
+  if (fileBase64 === 'FILE_BASE64_PLACEHOLDER') {
+    showFileSelector(); // Show upload UI
+
+    // Return dummy metadata (won't be used)
+    return {
+      width: 1920,
+      height: 1080,
+      pageCount: 1,
+      pageNumber: 1,
+      scale: 2.0
+    };
+  }
+
+  // Production rendering...
+}
 ```
 
 **Communication Flow**:
@@ -94,6 +176,110 @@ This approach is robust because:
 - Type-safe metadata exchange
 - Automatic viewport sizing based on actual content
 - Prevents race conditions (waits for true completion)
+
+### HTML Structure Requirements
+
+Each renderer page must include:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Format Renderer</title>
+
+  <style>
+    /* Reset and container styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: white;
+      overflow: hidden;
+    }
+
+    #container {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    canvas {
+      display: block;
+      max-width: 100%;
+      max-height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <!-- Main rendering canvas -->
+    <canvas id="format-canvas"></canvas>
+  </div>
+
+  <!-- Script will be inlined by vite-plugin-singlefile -->
+  <script type="module" src="./format.ts"></script>
+</body>
+</html>
+```
+
+**Required IDs**:
+- `container`: Main container div
+- `format-canvas`: Canvas element for rendering (use descriptive name like `pdf-canvas`, `epub-canvas`)
+
+### Format-Specific Parameters
+
+Different formats may need different parameters injected by Playwright:
+
+```typescript
+// PDF
+let fileBase64 = (globalThis as any).fileBase64 || 'FILE_BASE64_PLACEHOLDER';
+let pageNumber = (globalThis as any).pageNumber || 1;
+
+// EPUB
+let fileBase64 = (globalThis as any).fileBase64 || 'FILE_BASE64_PLACEHOLDER';
+let chapterNumber = (globalThis as any).chapterNumber || 1;
+
+// Video
+let fileBase64 = (globalThis as any).fileBase64 || 'FILE_BASE64_PLACEHOLDER';
+let timeOffset = (globalThis as any).timeOffset || 1000; // milliseconds
+```
+
+Update `js/src/renderer.ts` `injectDataIntoPage()` method accordingly for each format.
+
+### Checklist for New Renderers
+
+When creating a new renderer (e.g., `epub.html`):
+
+- [ ] Define placeholder constants (e.g., `FILE_BASE64_PLACEHOLDER`)
+- [ ] Read from `globalThis` with fallback to placeholders
+- [ ] Implement `renderDocument(): Promise<RenderMetadata>`
+- [ ] Detect placeholder value for manual testing mode
+- [ ] Show file upload UI in manual mode
+- [ ] Return accurate `RenderMetadata` in production mode
+- [ ] Set `window.renderComplete = renderDocument()`
+- [ ] Create canvas element with descriptive ID
+- [ ] Add format-specific file extensions to upload UI
+- [ ] Test both Playwright and manual modes
+- [ ] Verify metadata accuracy (width, height, pageCount)
+- [ ] Configure Vite build with `viteSingleFile()`
+- [ ] Update `js/src/renderer.ts` template map
+- [ ] Update Vite config input to build new template
+
+### Best Practices
+
+1. **Always return actual dimensions** - Don't use hardcoded values in production mode
+2. **Handle errors gracefully** - Show user-friendly error messages in manual mode
+3. **Use appropriate scale** - Default to 2.0× for high-quality output
+4. **Respect intrinsic sizes** - Use document's actual page/viewport dimensions
+5. **Test both modes** - Verify Playwright automation and manual upload work
+6. **Keep placeholders obvious** - Use ALL_CAPS naming like `FILE_BASE64_PLACEHOLDER`
 
 ## Technology Stack
 
@@ -482,6 +668,34 @@ Playwright's Chromium includes necessary codecs (H.264, AAC) and renders identic
 
 **Result**: Plain HTML + TypeScript compiled by Vite = minimal, fast templates
 
+### Vite Build Requirements
+
+Each renderer must be built with `vite-plugin-singlefile`:
+
+```typescript
+// vite.config.ts
+import { defineConfig } from 'vite';
+import { resolve } from 'path';
+import { viteSingleFile } from 'vite-plugin-singlefile';
+
+export default defineConfig({
+  plugins: [viteSingleFile()],
+  build: {
+    target: 'esnext',
+    rollupOptions: {
+      input: resolve(__dirname, 'format.html'),
+    },
+  },
+});
+```
+
+**Output**: Single self-contained HTML file with all JS/CSS inlined (~1-3MB depending on libraries)
+
+**Dependencies**:
+- Must use npm packages (not CDN links)
+- All dependencies will be bundled by Vite
+- Ensure libraries are compatible with ES modules
+
 ### Technical Challenges Solved
 
 #### 1. CORS Issues with file:// Protocol
@@ -544,72 +758,251 @@ await page.setViewportSize({
 
 Result: Screenshots are exactly the right size with no cropping.
 
-## Implementation Plan
+## Implementation Status
 
-### Phase 1: PDF Support (MVP)
+### Phase 1: PDF Support (MVP) ✅ COMPLETED
 
 **Goal**: Working PDF → screenshot pipeline
 
-**Tasks**:
-1. **render/** - Vite project
-   - Setup Vite multi-page config
-   - Create `pdf.html` + `pdf.ts` using PDF.js
-   - Create `test/index.html` upload page
-   - Build and verify output
+**Completed Components**:
 
-2. **js/** - Node.js package
-   - Setup TypeScript + Playwright
-   - Implement format detector (PDF only)
-   - Implement renderer (launch browser, inject file, screenshot)
-   - Implement CLI
-   - Implement programmatic API
-   - Copy templates from `render/dist/`
+1. **render/** - Vite project ✅
+   - ✅ Setup Vite with TypeScript (ES2022+ target, top-level await)
+   - ✅ Created PDF template using PDF.js 4.0.379
+   - ✅ Built test harness (upload page for local testing)
+   - ✅ Configured single-file build with `vite-plugin-singlefile`
+   - ✅ Build outputs self-contained `dist/pdf.html` (~1.6MB)
 
-3. **python/** - Python binding
-   - Setup pyproject.toml
-   - Implement thin wrapper CLI
-   - Implement thin wrapper API
+2. **js/** - Node.js package ✅
+   - ✅ Setup TypeScript project with strict mode
+   - ✅ Implemented format detector (MIME type + magic bytes)
+   - ✅ Implemented renderer using Playwright + Chromium
+   - ✅ Built CLI using Commander.js
+   - ✅ Exposed programmatic API
+   - ✅ Templates copied from `render/dist/`
+   - Package: `screenitshot` (ready for npm publish)
 
-4. **docker/** - Docker image
-   - Create Dockerfile based on npm package
-   - Test with sample PDF
+3. **python/** - Python binding ✅
+   - ✅ Setup pyproject.toml with hatchling
+   - ✅ Implemented thin wrapper calling npm CLI
+   - ✅ Created CLI entry point
+   - ✅ Added proper error handling and type hints
+   - Package: `screenitshot` (ready for PyPI publish)
 
-**Acceptance Criteria**:
+4. **docker/** - Docker image ✅
+   - ✅ Created production Dockerfile (uses npm registry)
+   - ✅ Created local Dockerfile (uses local js/ package)
+   - ✅ Installed all Chromium dependencies
+   - ✅ Configured Playwright to work in container
+
+**Acceptance Criteria Status**:
+- ✅ npm CLI works: `screenitshot test.pdf test.png`
+- ✅ npm API works: `import { screenshot } from 'screenitshot';`
+- ✅ Python CLI ready: `screenitshot test.pdf test.png` (requires npm package)
+- ✅ Python API ready: `from screenitshot import screenshot`
+- ✅ Docker images ready (build and run)
+- ✅ Unified interface across all platforms
+- ✅ PDF.js template working
+- ✅ Format detection working
+- ✅ Playwright rendering working
+
+**Key Files**:
+- `render/pdf.html`, `render/pdf.ts` - PDF renderer template
+- `render/index.html` - Test page with file upload
+- `js/src/index.ts` - Main API export
+- `js/src/cli.ts` - CLI interface
+- `js/src/renderer.ts` - Playwright browser automation
+- `js/src/detector.ts` - Format detection
+- `python/screenitshot/__init__.py` - Python API wrapper
+- `python/screenitshot/cli.py` - Python CLI wrapper
+- `docker/Dockerfile` - Production Docker image
+- `docker/Dockerfile.local` - Development Docker image
+
+### Testing Instructions
+
+**Test npm package locally**:
 ```bash
-# npm
-npm install -g screenitshot
-screenitshot test.pdf test.png  # Works!
-
-# Python
-pip install screenitshot
-screenitshot test.pdf test.png  # Works!
-
-# Docker
-docker run screenitshot test.pdf test.png  # Works!
-
-# Programmatic
-import { screenshot } from 'screenitshot';
-await screenshot('test.pdf', { output: 'test.png' });  # Works!
+cd js
+npm link
+cd ..
+# Get a sample PDF
+screenitshot sample.pdf output.png
 ```
 
-### Phase 2: Additional Formats
+**Test Python package locally**:
+```bash
+# First, ensure npm package is linked (from above)
+cd python
+pip install -e .
+screenitshot sample.pdf output-python.png
+```
 
-- EPUB support
-- DOCX support (via mammoth.js or docx-preview)
+**Test Docker locally**:
+```bash
+# Build from local source
+docker build -t screenitshot:local -f docker/Dockerfile.local .
+
+# Run with a PDF
+docker run -v $(pwd):/app screenitshot:local /app/sample.pdf /app/output-docker.png
+```
+
+### Current Limitations
+
+1. **Python package requires Node.js** - This is by design (thin wrapper approach)
+2. **Only PDF supported** - Phase 1 MVP, more formats in Phase 2
+3. **Single page per screenshot** - Multi-page → multiple screenshots not yet implemented
+4. **No timeout handling** - Long renders could hang indefinitely
+5. **No progress reporting** - Silent during conversion
+6. **Templates not customizable yet** - Plugin system planned for Phase 3
+
+### Phase 2: Additional Formats (Planned)
+
+- EPUB support (epub.js)
+- DOCX support (mammoth.js or docx-preview)
 - Markdown support
 - HTML support
 
-### Phase 3: Advanced Features
+### Phase 3: Advanced Features (Planned)
 
 - Multi-page rendering (generate multiple images or PDF)
 - Custom CSS injection
 - Template marketplace/registry
 - Parallel batch processing
-
-## Future Considerations
-
+- Timeout handling
+- Progress reporting
 - Template caching for performance
-- Parallel processing for batch operations
-- Custom template plugin system
-- Template marketplace/registry
 - Go/Rust bindings
+
+### Publishing Steps (When Ready)
+
+1. **npm**:
+   ```bash
+   cd js
+   npm publish
+   ```
+
+2. **PyPI**:
+   ```bash
+   cd python
+   python -m build
+   twine upload dist/*
+   ```
+
+3. **Docker**:
+   ```bash
+   docker build -t screenitshot/screenitshot:latest -f docker/Dockerfile .
+   docker push screenitshot/screenitshot:latest
+   ```
+
+## Implementation Notes & Lessons Learned
+
+### Data Injection Pattern Evolution
+
+**Original Design**: Inject `window.fileData` via Playwright `page.evaluate()`
+
+**Actually Implemented**: `page.addInitScript()` with `globalThis` injection
+
+**Rationale**:
+- More robust for bundled JavaScript (runs before page scripts)
+- Cleaner separation of concerns
+- Data available before any script executes
+- No timing issues or race conditions
+
+**How it works**:
+```typescript
+// Playwright side: Inject before page loads
+await page.addInitScript(({ fileBase64, pageNum }) => {
+  (globalThis as any).fileBase64 = fileBase64;
+  (globalThis as any).pageNumber = pageNum;
+}, { fileBase64, pageNum: pageNumber });
+
+// Template side: Read from globalThis
+let fileBase64 = (globalThis as any).fileBase64 || 'FILE_BASE64_PLACEHOLDER';
+```
+
+### Template Structure: Single-File Approach
+
+**Design Said**: "Self-contained HTML files"
+
+**Actually Implemented**: True single-file approach using `vite-plugin-singlefile`
+
+**Why This Matters**:
+- ✅ Works with `file://` protocol (no CORS issues)
+- ✅ No asset path resolution needed
+- ✅ Simpler deployment (just copy one HTML file)
+- ✅ Fully self-contained templates
+
+**Before** (Would have CORS issues):
+```
+templates/
+├── pdf.html                    # Entry point
+└── assets/
+    ├── pdf-[hash].js          # Separate file
+    └── pdf.worker.min-[hash].mjs
+```
+
+**After** (Works perfectly):
+```
+templates/
+└── pdf.html                    # Everything inlined (~1.6MB)
+```
+
+### PDF.js Worker Bundling
+
+**Challenge**: PDF.js requires a Web Worker, typically loaded from CDN
+
+**Solution**: Bundle locally with Vite using `?url` import:
+```typescript
+import workerSrc from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
+```
+
+**Result**:
+- 1MB worker file bundled in HTML
+- No internet required
+- Truly pinned version
+- Works offline
+
+### Viewport Sizing: Dynamic vs Fixed
+
+**Challenge**: PDFs have intrinsic page sizes (e.g., Letter = 612×792 points), but browser viewport was initially fixed at 1920×1080
+
+**Solution**: Return metadata from rendering Promise and resize viewport dynamically:
+```typescript
+// Page side: Return actual dimensions
+return {
+  width: Math.ceil(viewport.width),  // e.g., 1224 for Letter at 2×
+  height: Math.ceil(viewport.height), // e.g., 1584 for Letter at 2×
+  pageCount: pdf.numPages,
+  scale: 2.0
+};
+
+// Playwright side: Resize to match
+const metadata = await page.evaluate(async () => {
+  return await window.renderComplete;
+});
+
+await page.setViewportSize({
+  width: metadata.width,
+  height: metadata.height,
+});
+```
+
+**Result**: Screenshots are exactly the right size with no cropping or whitespace.
+
+### Good Design Choices Made
+
+1. **`globalThis` over `window`** - More correct in Node.js Playwright context
+2. **Temp file cleanup** - Ensures no leftover files on error
+3. **TypeScript strict mode** - Caught several bugs early
+4. **Separate Dockerfile.local** - Easier development workflow
+5. **Base64 encoding** - Simpler than binary array injection
+6. **Placeholder pattern** - Enables local testing without Playwright
+7. **Promise-based completion** - No polling, clean async/await
+
+### Trade-offs & Deliberate Choices
+
+1. **Single-file templates** - Larger file size (~1.6MB) but no CORS issues
+2. **npm-first architecture** - Simpler maintenance, all logic in one place
+3. **Python as thin wrapper** - Requires Node.js but ensures feature parity
+4. **No timeout handling yet** - MVP simplicity, will add in Phase 2
