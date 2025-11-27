@@ -22,13 +22,32 @@ function showFileSelector() {
   const container = document.getElementById('container');
   if (!container) return;
 
-  container.innerHTML = `
+  const canvas = document.getElementById('pdf-canvas') as HTMLCanvasElement;
+
+  // Create file input overlay without removing canvas
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  `;
+
+  overlay.innerHTML = `
     <div style="padding: 2rem; text-align: center;">
       <h2>Local Testing Mode</h2>
       <p>Select a PDF file to render:</p>
-      <input type="file" accept=".pdf" id="file-input" style="margin: 1rem 0;">
+      <input type="file" accept=".pdf,.png,.jpg,.jpeg,.gif" id="file-input" style="margin: 1rem 0;">
     </div>
   `;
+
+  document.body.appendChild(overlay);
 
   const input = document.getElementById('file-input') as HTMLInputElement;
   input.addEventListener('change', async (e) => {
@@ -39,6 +58,8 @@ function showFileSelector() {
     reader.onload = async (e) => {
       const base64 = (e.target?.result as string).split(',')[1];
       fileBase64 = base64;
+      // Remove overlay
+      overlay.remove();
       await renderPDF();
     };
     reader.readAsDataURL(file);
