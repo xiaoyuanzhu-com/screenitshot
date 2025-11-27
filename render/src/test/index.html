@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Screenitshot - Template Test</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    h1 {
+      margin-bottom: 2rem;
+    }
+    .upload-section {
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      padding: 2rem;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .upload-section:hover {
+      border-color: #666;
+    }
+    input[type="file"] {
+      display: none;
+    }
+    .upload-label {
+      display: inline-block;
+      padding: 0.75rem 1.5rem;
+      background: #007bff;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .upload-label:hover {
+      background: #0056b3;
+    }
+    #preview {
+      margin-top: 2rem;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 1rem;
+      min-height: 400px;
+      display: none;
+    }
+    #preview.show {
+      display: block;
+    }
+    iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    .info {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: #f8f9fa;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>📸 Screenitshot - Template Test</h1>
+
+  <div class="upload-section">
+    <label for="file-input" class="upload-label">
+      Choose a PDF file to test
+    </label>
+    <input type="file" id="file-input" accept=".pdf">
+    <p style="margin-top: 1rem; color: #666;">
+      Upload a PDF to see how it will be rendered
+    </p>
+  </div>
+
+  <div class="info">
+    <strong>Testing PDF.js renderer</strong>
+    <p>This page simulates how your PDF will be rendered before taking a screenshot.</p>
+  </div>
+
+  <div id="preview">
+    <h3>Preview:</h3>
+    <iframe id="preview-frame" src=""></iframe>
+  </div>
+
+  <script type="module">
+    const fileInput = document.getElementById('file-input');
+    const preview = document.getElementById('preview');
+    const previewFrame = document.getElementById('preview-frame');
+
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      const arrayBuffer = await file.arrayBuffer();
+
+      // Load PDF template in iframe
+      previewFrame.src = '/src/templates/pdf.html';
+
+      previewFrame.onload = () => {
+        // Inject file data into iframe
+        if (previewFrame.contentWindow) {
+          previewFrame.contentWindow.fileData = arrayBuffer;
+        }
+      };
+
+      preview.classList.add('show');
+    });
+  </script>
+</body>
+</html>
