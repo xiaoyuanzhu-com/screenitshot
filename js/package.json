@@ -12,6 +12,8 @@
     "build": "tsc && npm run copy-templates",
     "copy-templates": "mkdir -p templates && cp ../render/dist/pdf.html templates/",
     "dev": "tsc --watch",
+    "lint": "eslint \"src/**/*.ts\"",
+    "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -29,6 +31,9 @@
   },
   "devDependencies": {
     "@types/node": "^20.10.6",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.56.0",
     "typescript": "^5.3.3"
   },
   "engines": {
