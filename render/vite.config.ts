@@ -15,8 +15,8 @@ export default defineConfig({
     target: 'esnext',
     rollupOptions: {
       input: {
-        pdf: resolve(__dirname, 'src/templates/pdf.html'),
-        test: resolve(__dirname, 'src/test/index.html'),
+        main: resolve(__dirname, 'index.html'),
+        pdf: resolve(__dirname, 'src/pdf.html'),
       },
       output: {
         entryFileNames: 'assets/[name]-[hash].js',
