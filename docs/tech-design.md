@@ -53,22 +53,33 @@ Each format has an HTML template that:
 2. Receives file data via Playwright injection
 3. Renders content in viewport
 4. Signals ready state for screenshot capture
+5. Supports both Playwright automation and manual testing modes
+
+**Full specification**: See [render/RENDERER_SPEC.md](../render/RENDERER_SPEC.md) for complete interface requirements and implementation guide.
 
 **Template interface**:
 ```typescript
-// Templates expose this interface
-interface TemplateAPI {
-  window.fileData: ArrayBuffer | string;  // Injected by renderer
-  window.renderComplete: Promise<RenderMetadata>;  // Resolves when ready with metadata
-}
+// Global variables (input from Playwright)
+let fileBase64 = (globalThis as any).fileBase64 || 'FILE_BASE64_PLACEHOLDER';
+let pageNumber = (globalThis as any).pageNumber || 1;
 
+// Window API (output to Playwright)
 interface RenderMetadata {
   width: number;        // Rendered canvas width
   height: number;       // Rendered canvas height
-  pageCount?: number;   // Total pages (for multi-page formats)
+  pageCount: number;    // Total pages (for multi-page formats)
   pageNumber: number;   // Current page rendered
   scale: number;        // Scale factor used
 }
+
+declare global {
+  interface Window {
+    renderComplete: Promise<RenderMetadata>;
+  }
+}
+
+// Set on page load
+window.renderComplete = renderDocument();
 ```
 
 **Communication Flow**:
@@ -103,7 +114,7 @@ All dependencies use exact versions:
 - Chromium: Playwright-bundled version (auto-pinned)
 - JS rendering libraries: Pinned via `package-lock.json`
 
-### Build Tooling: Vite (no UI framework)
+### Build Tooling: Vite + vite-plugin-singlefile
 
 **Why Vite without React/Vue/Svelte?**
 - Templates are single-purpose (render one format, no interactivity)
@@ -111,31 +122,65 @@ All dependencies use exact versions:
 - Just need ES6 imports and bundling
 - Framework overhead unnecessary for static rendering
 
+**Build Strategy: Inline Everything**
+- Uses `vite-plugin-singlefile` to inline all JS/CSS into a single HTML file
+- Avoids CORS issues with `file://` protocol (required for Playwright)
+- Each template becomes a completely self-contained HTML file (~1.6MB for PDF)
+- No external dependencies or asset files needed at runtime
+
 **Template structure**:
 ```typescript
-// src/templates/pdf.ts
+// render/pdf.ts
 import * as pdfjsLib from 'pdfjs-dist';
 
-window.renderComplete = new Promise(async (resolve) => {
-  const pdf = await pdfjsLib.getDocument(window.fileData).promise;
-  const page = await pdf.getPage(1);
-  // Render to canvas...
-  resolve();
-});
+// Data injected by Playwright via page.addInitScript()
+let fileBase64 = (globalThis as any).fileBase64 || 'FILE_BASE64_PLACEHOLDER';
+let pageNumber = (globalThis as any).pageNumber || 1;
+
+window.renderComplete = renderPDF(); // Returns Promise<RenderMetadata>
+
+async function renderPDF(): Promise<RenderMetadata> {
+  // ... render PDF to canvas ...
+  return {
+    width: Math.ceil(viewport.width),
+    height: Math.ceil(viewport.height),
+    pageCount: pdf.numPages,
+    pageNumber: pageNumber,
+    scale: 2.0
+  };
+}
 ```
 
 ```html
-<!-- src/templates/pdf.html -->
+<!-- render/pdf.html (source) -->
 <!DOCTYPE html>
 <html>
 <body>
-  <canvas id="viewer"></canvas>
+  <canvas id="pdf-canvas"></canvas>
   <script type="module" src="./pdf.ts"></script>
 </body>
 </html>
 ```
 
-Vite bundles into self-contained HTML with inlined/bundled JS.
+After Vite build with `vite-plugin-singlefile`:
+```html
+<!-- render/dist/pdf.html (output) -->
+<!DOCTYPE html>
+<html>
+<body>
+  <canvas id="pdf-canvas"></canvas>
+  <script type="module">
+    /* ALL JavaScript inlined here (~1.6MB including PDF.js) */
+  </script>
+</body>
+</html>
+```
+
+This single-file approach:
+- ✅ Works with `file://` protocol (no CORS issues)
+- ✅ No asset path resolution needed
+- ✅ Simpler deployment (just copy one HTML file)
+- ✅ Fully self-contained templates
 
 ## Project Structure
 
@@ -143,21 +188,13 @@ Vite bundles into self-contained HTML with inlined/bundled JS.
 screenitshot/                  # Monorepo
 ├── render/                    # Vite project for templates
 │   ├── package.json
-│   ├── vite.config.ts         # Multi-page build config
+│   ├── vite.config.ts         # Single-file build config (vite-plugin-singlefile)
 │   ├── tsconfig.json
-│   ├── src/
-│   │   ├── templates/
-│   │   │   ├── pdf.html       # PDF template
-│   │   │   ├── pdf.ts         # PDF rendering logic
-│   │   │   ├── epub.html      # EPUB template (future)
-│   │   │   └── epub.ts
-│   │   └── test/
-│   │       └── index.html     # Upload test page
-│   └── dist/                  # Built output: html + js per format
-│       ├── pdf.html
-│       ├── assets/
-│       │   └── pdf-*.js
-│       └── test.html
+│   ├── pdf.html               # PDF template (source)
+│   ├── pdf.ts                 # PDF rendering logic (source)
+│   ├── index.html             # Test/dev page (source)
+│   └── dist/                  # Built output: self-contained HTML files
+│       └── pdf.html           # Single 1.6MB file with all JS inlined
 │
 ├── js/                        # Node.js package & CLI
 │   ├── package.json           # npm: screenitshot
@@ -167,9 +204,9 @@ screenitshot/                  # Monorepo
 │   │   ├── cli.ts             # CLI entry point
 │   │   ├── renderer.ts        # Playwright browser automation
 │   │   ├── detector.ts        # Format detection
-│   │   └── types.ts           # Shared types
+│   │   └── types.ts           # Shared types (including RenderMetadata)
 │   ├── templates/             # Copied from render/dist/ at build time
-│   │   └── pdf.html
+│   │   └── pdf.html           # Self-contained template (no assets folder)
 │   └── dist/                  # Compiled JS
 │
 ├── python/                    # Python binding
@@ -190,7 +227,7 @@ screenitshot/                  # Monorepo
 
 ```mermaid
 flowchart LR
-    A[render/ Vite build] --> B[dist/pdf.html + js]
+    A[render/ Vite build] --> B[dist/pdf.html<br/>single 1.6MB file]
     B --> C[Copy to js/templates/]
     C --> D[js/ TypeScript build]
     D --> E[npm package ready]
@@ -201,11 +238,16 @@ flowchart LR
 ```
 
 **Steps**:
-1. `cd render && npm run build` → produces `dist/pdf.html` (bundled)
-2. Copy `render/dist/*.html` to `js/templates/`
-3. `cd js && npm run build` → produces CLI + API
-4. Publish `js/` to npm
-5. Docker uses npm package from registry
+1. `cd render && npm run build` → produces `dist/pdf.html` (self-contained, all JS inlined)
+2. `cd js && npm run build` → runs `tsc` + copies `render/dist/pdf.html` to `js/templates/`
+3. Publish `js/` to npm
+4. Docker uses npm package from registry
+
+**Key changes from original design**:
+- ✅ Templates are now **single HTML files** with all JavaScript inlined (no separate assets folder)
+- ✅ Uses `vite-plugin-singlefile` to avoid CORS issues with `file://` protocol
+- ✅ Data injection via `page.addInitScript()` instead of string replacement in HTML
+- ✅ Metadata callback returns viewport dimensions for automatic resizing
 
 ### Unified Package Interface
 
@@ -439,6 +481,68 @@ Playwright's Chromium includes necessary codecs (H.264, AAC) and renders identic
 - Simple: load library → render content → signal complete
 
 **Result**: Plain HTML + TypeScript compiled by Vite = minimal, fast templates
+
+### Technical Challenges Solved
+
+#### 1. CORS Issues with file:// Protocol
+**Problem**: Vite's default build creates separate JS files referenced via `<script src="/assets/pdf-*.js">`. When loading via `file://` protocol (required for Playwright), browsers block these scripts due to CORS policy.
+
+**Solution**: Use `vite-plugin-singlefile` to inline all JavaScript and CSS directly into the HTML file. This creates a single self-contained file that works with `file://` without CORS issues.
+
+```typescript
+// vite.config.ts
+export default defineConfig({
+  plugins: [viteSingleFile()], // Inline everything
+  build: {
+    rollupOptions: {
+      input: resolve(__dirname, 'pdf.html'),
+    },
+  },
+});
+```
+
+#### 2. Data Injection into Browser Context
+**Problem**: Initial approach used string replacement in HTML templates, but with Vite bundling, the placeholders are in the bundled JavaScript, not accessible for replacement.
+
+**Solution**: Use Playwright's `page.addInitScript()` to inject data before the page loads:
+
+```typescript
+// Inject data before template loads
+await page.addInitScript(({ fileBase64, pageNum }) => {
+  (globalThis as any).fileBase64 = fileBase64;
+  (globalThis as any).pageNumber = pageNum;
+}, { fileBase64, pageNum: pageNumber });
+
+// Template reads from globalThis
+let fileBase64 = (globalThis as any).fileBase64 || 'PLACEHOLDER';
+```
+
+#### 3. Proper PDF Size Detection
+**Problem**: PDFs have intrinsic page sizes (e.g., Letter = 612×792 points), but the initial viewport was fixed at 1920×1080, causing cropping or whitespace.
+
+**Solution**: Return metadata from the rendering Promise and resize viewport dynamically:
+
+```typescript
+// Page side: Return actual dimensions
+return {
+  width: Math.ceil(viewport.width),  // e.g., 1224 for Letter at 2×
+  height: Math.ceil(viewport.height), // e.g., 1584 for Letter at 2×
+  pageCount: pdf.numPages,
+  scale: 2.0
+};
+
+// Playwright side: Resize to match
+const metadata = await page.evaluate(async () => {
+  return await window.renderComplete;
+});
+
+await page.setViewportSize({
+  width: metadata.width,
+  height: metadata.height,
+});
+```
+
+Result: Screenshots are exactly the right size with no cropping.
 
 ## Implementation Plan
 
