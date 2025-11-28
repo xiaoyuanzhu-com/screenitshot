@@ -2,7 +2,7 @@ import { chromium, type Page } from 'playwright';
 import { readFile } from 'fs/promises';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import type { FileFormat, ScreenshotOptions, ScreenshotResult, RenderMetadata } from './types.js';
+import type { FileFormat, ScreenshotOptions, ScreenshotResult } from './types.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

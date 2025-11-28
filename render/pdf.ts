@@ -31,8 +31,6 @@ function showFileSelector() {
   const container = document.getElementById('container');
   if (!container) return;
 
-  const canvas = document.getElementById('pdf-canvas') as HTMLCanvasElement;
-
   // Create file input overlay without removing canvas
   const overlay = document.createElement('div');
   overlay.style.cssText = `
