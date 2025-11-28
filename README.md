@@ -71,6 +71,7 @@ pip install screenitshot
 | File Extension | Library | Version |
 |----------------|---------|---------|
 | `.pdf` | [PDF.js](https://github.com/mozilla/pdf.js) | 4.0.379 |
+| `.docx` | [Mammoth](https://github.com/mwilliamson/mammoth.js) | 1.11.0 |
 
 ## Documentation
 

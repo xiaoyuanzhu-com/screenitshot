@@ -5,12 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npm run build:pdf && npm run build:docx",
+    "build:pdf": "VITE_INPUT=pdf vite build",
+    "build:docx": "VITE_INPUT=docx vite build",
     "preview": "vite preview",
     "lint": "eslint \"*.ts\"",
     "lint:fix": "eslint \"*.ts\" --fix"
   },
   "dependencies": {
+    "docx": "^9.5.1",
+    "mammoth": "^1.11.0",
     "pdfjs-dist": "^4.0.379"
   },
   "devDependencies": {
