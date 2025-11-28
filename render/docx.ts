@@ -1,3 +1,5 @@
+import { renderAsync } from 'docx-preview';
+
 // Placeholder values - will be injected by Playwright before page loads
 const FILE_BASE64_PLACEHOLDER = 'FILE_BASE64_PLACEHOLDER';
 const PAGE_NUMBER_PLACEHOLDER = 1;
@@ -67,12 +69,12 @@ function showFileSelector() {
   });
 }
 
-// Convert DOCX to HTML using mammoth.js or similar approach
+// Render DOCX using docx-preview
 async function renderDOCX(): Promise<RenderMetadata> {
   try {
-    const wrapper = document.querySelector('.docx-wrapper') as HTMLElement;
-    if (!wrapper) {
-      throw new Error('DOCX wrapper element not found');
+    const container = document.getElementById('docx-container') as HTMLElement;
+    if (!container) {
+      throw new Error('DOCX container element not found');
     }
 
     // Check if placeholder value (local testing mode)
@@ -88,62 +90,100 @@ async function renderDOCX(): Promise<RenderMetadata> {
       };
     }
 
-    // Convert base64 to ArrayBuffer
+    // Convert base64 to Blob (docx-preview accepts Blob)
     const binaryString = atob(fileBase64);
     const bytes = new Uint8Array(binaryString.length);
     for (let i = 0; i < binaryString.length; i++) {
       bytes[i] = binaryString.charCodeAt(i);
     }
+    const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
 
-    // Import mammoth dynamically
-    const mammoth = await import('mammoth');
+    // Render DOCX using docx-preview
+    await renderAsync(blob, container, undefined, {
+      className: 'docx',
+      inWrapper: true,
+      ignoreWidth: false,
+      ignoreHeight: false,
+      ignoreFonts: false,
+      breakPages: true,
+      ignoreLastRenderedPageBreak: false,
+      experimental: false,
+      trimXmlDeclaration: true,
+      useBase64URL: true,
+      renderHeaders: true,
+      renderFooters: true,
+      renderFootnotes: true,
+      renderEndnotes: true,
+    });
 
-    // Convert DOCX to HTML
-    const result = await mammoth.convertToHtml(
-      { arrayBuffer: bytes.buffer },
-      {
-        styleMap: [
-          "p[style-name='Heading 1'] => h1:fresh",
-          "p[style-name='Heading 2'] => h2:fresh",
-          "p[style-name='Heading 3'] => h3:fresh",
-          "p[style-name='Heading 4'] => h4:fresh",
-          "p[style-name='Heading 5'] => h5:fresh",
-          "p[style-name='Heading 6'] => h6:fresh",
-        ]
-      }
-    );
+    // Wait for rendering to complete
+    await new Promise(resolve => setTimeout(resolve, 300));
 
-    // Insert the HTML content
-    wrapper.innerHTML = result.value;
-
-    // Log any messages/warnings
-    if (result.messages.length > 0) {
-      console.log('Conversion messages:', result.messages);
+    // docx-preview creates a wrapper div with class 'docx-wrapper'
+    const wrapper = container.querySelector('.docx-wrapper') as HTMLElement;
+    if (!wrapper) {
+      throw new Error('DOCX rendering failed - no wrapper element found');
     }
 
-    // Wait for images and other resources to load
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Find all rendered sections (document sections, not page breaks)
+    const sections = wrapper.querySelectorAll('section.docx');
 
-    // Calculate the actual content dimensions
-    const content = document.getElementById('docx-content') as HTMLElement;
-    if (!content) {
-      throw new Error('Content element not found');
+    // Use the first section as the main content (contains body)
+    // docx-preview renders the full document in sections, page breaks are visual only
+    let visiblePage: HTMLElement;
+    if (sections.length > 0) {
+      visiblePage = sections[0] as HTMLElement;
+      // Hide other sections (headers/footers rendered separately)
+      sections.forEach((section, index) => {
+        if (index > 0) {
+          (section as HTMLElement).style.display = 'none';
+        }
+      });
+    } else {
+      visiblePage = wrapper;
     }
 
-    // Get the bounding box of the actual content
-    const boundingBox = wrapper.getBoundingClientRect();
-    const width = Math.ceil(boundingBox.width) + 80; // Add padding
-    const height = Math.ceil(boundingBox.height) + 80; // Add padding
+    // Use 2x scale for high quality output
+    const scale = 2.0;
 
-    console.log('DOCX rendered successfully');
+    // Get page dimensions from inline styles (set by docx-preview from DOCX page settings)
+    const inlineWidth = visiblePage.style.width;
+    const inlineMinHeight = visiblePage.style.minHeight;
+
+    let width: number;
+    let height: number;
+
+    // Parse width from inline style (in pt)
+    if (inlineWidth) {
+      width = parseFloat(inlineWidth);
+    } else {
+      width = visiblePage.offsetWidth;
+    }
+
+    // For height, use minHeight (page height from DOCX) or calculate A4 ratio
+    if (inlineMinHeight) {
+      height = parseFloat(inlineMinHeight);
+    } else {
+      // A4 ratio: height = width * (297/210)
+      height = width * (297 / 210);
+    }
+
+    width = Math.ceil(width * scale);
+    height = Math.ceil(height * scale);
+
+    // Calculate approximate page count based on content height vs page height
+    const contentHeight = visiblePage.scrollHeight;
+    const singlePageHeight = parseFloat(inlineMinHeight) || (width / scale) * (297 / 210);
+    const pageCount = Math.ceil(contentHeight / singlePageHeight);
+    const targetPage = Math.max(1, Math.min(pageNumber, pageCount));
 
     // Return metadata for Playwright to resize viewport
     return {
-      width: Math.max(width, 816), // Minimum A4 width
-      height: Math.max(height, 400), // Minimum reasonable height
-      pageCount: 1, // DOCX is rendered as single continuous page
-      pageNumber: 1,
-      scale: 1.0
+      width,
+      height,
+      pageCount,
+      pageNumber: targetPage,
+      scale
     };
   } catch (error) {
     console.error('Error rendering DOCX:', error);

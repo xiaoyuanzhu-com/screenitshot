@@ -19,55 +19,26 @@
       height: 100vh;
       display: flex;
       justify-content: center;
-      align-items: center;
+      align-items: flex-start;
       background: white;
     }
-    #docx-content {
-      width: 100%;
-      height: 100%;
-      padding: 40px;
+    #docx-container {
       background: white;
-      overflow: auto;
     }
-    /* Basic DOCX rendering styles */
+    /* Override docx-preview default styles for clean rendering */
     .docx-wrapper {
-      max-width: 816px; /* A4 width in pixels at 96 DPI */
-      margin: 0 auto;
-      background: white;
+      background: white !important;
+      padding: 0 !important;
     }
-    .docx-wrapper p {
-      margin: 0 0 10px 0;
-      line-height: 1.5;
-    }
-    .docx-wrapper h1,
-    .docx-wrapper h2,
-    .docx-wrapper h3,
-    .docx-wrapper h4,
-    .docx-wrapper h5,
-    .docx-wrapper h6 {
-      margin: 16px 0 8px 0;
-      font-weight: bold;
-    }
-    .docx-wrapper ul,
-    .docx-wrapper ol {
-      margin: 0 0 10px 20px;
-    }
-    .docx-wrapper table {
-      border-collapse: collapse;
-      margin: 10px 0;
-    }
-    .docx-wrapper td,
-    .docx-wrapper th {
-      border: 1px solid #ddd;
-      padding: 8px;
+    .docx-wrapper > section.docx {
+      box-shadow: none !important;
+      margin-bottom: 0 !important;
     }
   </style>
 </head>
 <body>
   <div id="container">
-    <div id="docx-content">
-      <div class="docx-wrapper"></div>
-    </div>
+    <div id="docx-container"></div>
   </div>
   <script type="module" src="./docx.ts"></script>
 </body>

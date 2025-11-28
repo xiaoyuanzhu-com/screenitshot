@@ -13,8 +13,7 @@
     "lint:fix": "eslint \"*.ts\" --fix"
   },
   "dependencies": {
-    "docx": "^9.5.1",
-    "mammoth": "^1.11.0",
+    "docx-preview": "^0.3.7",
     "pdfjs-dist": "^4.0.379"
   },
   "devDependencies": {
