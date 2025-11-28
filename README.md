@@ -1,11 +1,12 @@
 # ScreenItShot
 
-Turn various types of documents into screenshots. Inspired by [MarkItDown](https://github.com/microsoft/markitdown).
+Convert many document formats into screenshot previews.  
+Inspired by [MarkItDown](https://github.com/microsoft/markitdown).
 
 ## Features
 
-- PDF, ePub, Word, Excel support
-- Browser based
+- PDF, Word, Excel support and many more
+- Browser based render and screenshot
 - JavaScript package and cli
 - Python package and cli
 - Docker image
@@ -18,7 +19,17 @@ Turn various types of documents into screenshots. Inspired by [MarkItDown](https
 | `.epub` | [epub.js](https://github.com/futurepress/epub.js) | ✅ |
 | `.docx` | [docxjs](https://github.com/VolodymyrBaydalka/docxjs) | ✅ |
 | `.xlsx` | [ExcelJS](https://github.com/exceljs/exceljs) | ✅ |
-| `.pptx` | | ❌ |
+| `.pptx` | [pptx-preview](https://github.com/niconiahi/pptx-preview) | ✅ |
+| `.md` | [marked](https://github.com/markedjs/marked) | 📋 TODO |
+| `.html` | [Chromium](https://www.chromium.org/chromium-projects/) | 📋 TODO |
+| `.csv` | [PapaParse](https://github.com/mholt/PapaParse) | 📋 TODO |
+| `.rtf` | [rtf.js](https://github.com/niconiahi/rtf.js) | 📋 TODO |
+| `.ipynb` | [marked](https://github.com/markedjs/marked) + [Shiki](https://github.com/shikijs/shiki) | 📋 TODO |
+| `.tex` | [LaTeX.js](https://github.com/michael-brade/LaTeX.js) | 📋 TODO |
+| source code | [Shiki](https://github.com/shikijs/shiki) | 📋 TODO |
+| URL | [Chromium](https://www.chromium.org/chromium-projects/) | 📋 TODO |
+| `.mmd` (Mermaid) | [mermaid.js](https://github.com/mermaid-js/mermaid) | 📋 TODO |
+| location (lat/lng) | [MapLibre GL JS](https://github.com/maplibre/maplibre-gl-js) | 📋 TODO |
 
 
 ## Quick Start
