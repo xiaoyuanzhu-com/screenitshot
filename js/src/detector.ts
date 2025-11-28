@@ -93,6 +93,9 @@ export async function detectFormat(filePath: string): Promise<FileFormat> {
     '.astro': 'code',
     // URL file extension
     '.url': 'url',
+    // Mermaid diagram extension
+    '.mmd': 'mmd',
+    '.mermaid': 'mmd',
   };
 
   if (ext in extensionMap) {

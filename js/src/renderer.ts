@@ -23,6 +23,7 @@ export class Renderer {
       tex: resolve(__dirname, '../templates/tex.html'),
       code: resolve(__dirname, '../templates/code.html'),
       url: resolve(__dirname, '../templates/url.html'),
+      mmd: resolve(__dirname, '../templates/mmd.html'),
       unknown: '',
     };
 

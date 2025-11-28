@@ -28,7 +28,7 @@ Inspired by [MarkItDown](https://github.com/microsoft/markitdown).
 | `.tex` | [LaTeX.js](https://github.com/michael-brade/LaTeX.js) | ✅ |
 | source code | [Shiki](https://github.com/shikijs/shiki) | ✅ |
 | URL | [Chromium](https://www.chromium.org/chromium-projects/) | ✅ |
-| `.mmd` (Mermaid) | [mermaid.js](https://github.com/mermaid-js/mermaid) | 📋 TODO |
+| `.mmd` (Mermaid) | [mermaid.js](https://github.com/mermaid-js/mermaid) | ✅ |
 | location (lat/lng) | [MapLibre GL JS](https://github.com/maplibre/maplibre-gl-js) | 📋 TODO |
 
 
