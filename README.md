@@ -4,105 +4,75 @@ Convert various file formats to high-quality screenshots using browser-based ren
 
 ## Features
 
-- =ø Universal screenshot tool for PDFs, EPUBs, DOCX, and more
-- <¯ High-quality rendering using Chromium
-- =' Available as npm package, Python binding, and Docker image
-- =æ Reproducible builds with pinned dependencies
-- =€ Simple CLI and programmatic APIs
+- Universal screenshot tool for PDFs, EPUBs, DOCX, and more
+- High-quality rendering using Chromium
+- Available as npm package, Python binding, and Docker image
+- Reproducible builds with pinned dependencies
+- Simple CLI and programmatic APIs
 
 ## Quick Start
 
-### npm (Recommended)
+### CLI (One-liner)
 
 ```bash
-# Install globally
-npm install -g screenitshot
+# With npx (no installation)
+npx screenitshot document.pdf output.png
 
-# Use CLI
-screenitshot document.pdf output.png
-```
+# With uvx (Python, no installation)
+uvx screenitshot document.pdf output.png
 
-### Python
-
-```bash
-# Install (requires Node.js + npm package)
-pip install screenitshot
-
-# Use CLI
-screenitshot document.pdf output.png
-```
-
-### Docker
-
-```bash
-# Run without installing anything
+# With Docker (no installation)
 docker run -v $(pwd):/app screenitshot/screenitshot /app/document.pdf /app/output.png
+```
+
+### Package Usage
+
+**JavaScript/TypeScript:**
+```javascript
+import { screenshot } from 'screenitshot';
+
+await screenshot('document.pdf', {
+  output: 'output.png',
+  format: 'png',
+  width: 1920,
+  height: 1080,
+  page: 1
+});
+```
+
+**Python:**
+```python
+from screenitshot import screenshot
+
+screenshot(
+    'document.pdf',
+    output='output.png',
+    format='png',
+    width=1920,
+    height=1080,
+    page=1
+)
 ```
 
 ## Supported Formats
 
--  PDF (via PDF.js)
-- =§ EPUB (coming soon)
-- =§ DOCX (coming soon)
-- =§ Markdown (coming soon)
+| File Extension | Library | Version |
+|----------------|---------|---------|
+| `.pdf` | [PDF.js](https://mozilla.github.io/pdf.js/) | 4.0.379 |
 
-## Project Structure
+## Installation
 
-This is a monorepo with the following packages:
-
-- **render/** - Vite project with format templates (PDF.js, etc.)
-- **js/** - Node.js package (primary implementation)
-- **python/** - Python binding (thin wrapper)
-- **docker/** - Docker image configuration
-- **docs/** - Technical design and documentation
-
-## Development
-
-### Prerequisites
-
-- Node.js 18+
-- npm or yarn
-
-### Build from source
-
+### npm
 ```bash
-# 1. Build render templates
-cd render
-npm install
-npm run build
-
-# 2. Build js package
-cd ../js
-npm install
-npm run build
-
-# 3. Install Python package (development mode)
-cd ../python
-pip install -e .
+npm install -g screenitshot
 ```
 
-### Local testing
-
+### Python
 ```bash
-# Test npm package
-cd js
-npm link
-screenitshot ../test.pdf test.png
-
-# Test Python package
-cd python
-pip install -e .
-screenitshot ../test.pdf test.png
-
-# Test Docker
-docker build -t screenitshot:local -f docker/Dockerfile.local .
-docker run -v $(pwd):/app screenitshot:local /app/test.pdf /app/output.png
+pip install screenitshot
 ```
 
 ## Documentation
 
-See [docs/tech-design.md](docs/tech-design.md) for the complete technical design.
-
-## License
-
-MIT
+- [Development Guide](docs/dev.md) - Build from source, local testing, and contribution guide
+- [Technical Design](docs/tech-design.md) - Complete technical design and architecture

@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write  # Required for npm provenance
+      id-token: write  # Required for OIDC authentication (npm trusted publishing)
 
     steps:
       - name: Checkout code
@@ -44,11 +44,11 @@ jobs:
         working-directory: ./js
         run: npm run lint
 
-      - name: Publish to npm with provenance
+      - name: Publish to npm with OIDC (trusted publishing)
         working-directory: ./js
         run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
+        # No token needed! Uses OIDC authentication via id-token: write permission
+        # Configure trusted publisher at: https://www.npmjs.com/package/screenitshot/access
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
