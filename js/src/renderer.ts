@@ -24,6 +24,7 @@ export class Renderer {
       code: resolve(__dirname, '../templates/code.html'),
       url: resolve(__dirname, '../templates/url.html'),
       mmd: resolve(__dirname, '../templates/mmd.html'),
+      location: resolve(__dirname, '../templates/location.html'),
       unknown: '',
     };
 

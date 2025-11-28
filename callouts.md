@@ -14,14 +14,27 @@ This requires special handling in the renderer since there's no file to read or 
 - Some sites may block headless browsers
 
 ## Location (lat/lng) Support
-The location format requires coordinates in a specific format. The current implementation expects input as a text file containing coordinates in the format:
-```
-lat,lng
-```
-For example: `40.7128,-74.0060`
+The location format requires coordinates in a specific format. Supported formats:
+
+1. Simple CSV format: `lat,lng` or `lat,lng,zoom`
+   - Example: `40.7128,-74.0060`
+   - Example with zoom: `40.7128,-74.0060,15`
+
+2. JSON format:
+   ```json
+   {"lat": 40.7128, "lng": -74.0060, "zoom": 12}
+   ```
+
+Supported file extensions: `.location`, `.loc`, `.geo`
+
+**Features:**
+- Uses OpenStreetMap tiles (free, no API key required)
+- Red marker placed at the specified location
+- Default zoom level of 12 if not specified
+- Fixed 800x600 output dimensions
 
 **Limitations:**
-- Requires MapLibre GL JS which needs a map tile provider
-- Using OpenStreetMap tiles which may have rate limits
+- OpenStreetMap tiles may have rate limits for heavy usage
 - No custom map styles supported
 - Single marker only
+- Map tiles require network connectivity
