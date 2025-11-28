@@ -16,6 +16,8 @@ export async function detectFormat(filePath: string): Promise<FileFormat> {
     '.markdown': 'md',
     '.html': 'html',
     '.htm': 'html',
+    '.csv': 'csv',
+    '.tsv': 'csv',
   };
 
   if (ext in extensionMap) {

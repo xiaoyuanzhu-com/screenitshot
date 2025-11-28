@@ -17,6 +17,7 @@ export class Renderer {
       pptx: resolve(__dirname, '../templates/pptx.html'),
       md: resolve(__dirname, '../templates/md.html'),
       html: resolve(__dirname, '../templates/html.html'),
+      csv: resolve(__dirname, '../templates/csv.html'),
       unknown: '',
     };
 
