@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XLSX Renderer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: white;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-size: 14px;
+    }
+    #container {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      justify-content: flex-start;
+      align-items: flex-start;
+      background: white;
+    }
+    #xlsx-container {
+      background: white;
+      padding: 20px;
+    }
+    /* Excel-like table styling */
+    .xlsx-table {
+      border-collapse: collapse;
+      background: white;
+    }
+    .xlsx-table th,
+    .xlsx-table td {
+      border: 1px solid #d0d0d0;
+      padding: 4px 8px;
+      text-align: left;
+      vertical-align: middle;
+      white-space: nowrap;
+      min-width: 64px;
+      max-width: 300px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    /* Row header (row numbers) */
+    .xlsx-table .row-header {
+      background: #f3f3f3;
+      color: #666;
+      text-align: center;
+      font-weight: normal;
+      min-width: 40px;
+      border-right: 2px solid #c0c0c0;
+    }
+    /* Column header (A, B, C...) */
+    .xlsx-table thead th {
+      background: #f3f3f3;
+      color: #666;
+      font-weight: normal;
+      text-align: center;
+      border-bottom: 2px solid #c0c0c0;
+    }
+    .xlsx-table thead th.corner {
+      background: #f3f3f3;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <div id="xlsx-container"></div>
+  </div>
+  <script type="module" src="./xlsx.ts"></script>
+</body>
+</html>

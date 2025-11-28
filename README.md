@@ -4,7 +4,7 @@ Convert various file formats to high-quality screenshots using browser-based ren
 
 ## Features
 
-- Universal screenshot tool for PDFs, EPUBs, DOCX, and more
+- Universal screenshot tool for PDFs, EPUBs, DOCX, XLSX, and more
 - High-quality rendering using Chromium
 - Available as npm package, Python binding, and Docker image
 - Reproducible builds with pinned dependencies
@@ -72,6 +72,7 @@ pip install screenitshot
 |----------------|---------|---------|
 | `.pdf` | [PDF.js](https://github.com/mozilla/pdf.js) | 4.0.379 |
 | `.docx` | [docx-preview](https://github.com/VolodymyrBaydalka/docxjs) | 0.3.7 |
+| `.xlsx` | [ExcelJS](https://github.com/exceljs/exceljs) | 4.4.0 |
 
 ## Documentation
 

@@ -13,6 +13,7 @@ export class Renderer {
       pdf: resolve(__dirname, '../templates/pdf.html'),
       epub: resolve(__dirname, '../templates/epub.html'),
       docx: resolve(__dirname, '../templates/docx.html'),
+      xlsx: resolve(__dirname, '../templates/xlsx.html'),
       unknown: '',
     };
 
