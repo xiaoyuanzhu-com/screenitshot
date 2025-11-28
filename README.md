@@ -68,12 +68,12 @@ pip install screenitshot
 
 ## Supported Formats
 
-| File Extension | Library | Version |
-|----------------|---------|---------|
-| `.pdf` | [PDF.js](https://github.com/mozilla/pdf.js) | 4.0.379 |
-| `.docx` | [docx-preview](https://github.com/VolodymyrBaydalka/docxjs) | 0.3.7 |
-| `.xlsx` | [ExcelJS](https://github.com/exceljs/exceljs) | 4.4.0 |
-| `.pptx` | [pptx-preview](https://www.npmjs.com/package/pptx-preview) | 1.0.7 |
+| File Extension | Library | Version | Status |
+|----------------|---------|---------|--------|
+| `.pdf` | [PDF.js](https://github.com/mozilla/pdf.js) | 4.0.379 | ✅ |
+| `.docx` | [docx-preview](https://github.com/VolodymyrBaydalka/docxjs) | 0.3.7 | ✅ |
+| `.xlsx` | [ExcelJS](https://github.com/exceljs/exceljs) | 4.4.0 | ✅ |
+| `.pptx` | - | - | ❌ |
 
 ## Documentation
 
