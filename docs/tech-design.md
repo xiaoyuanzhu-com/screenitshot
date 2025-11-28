@@ -91,11 +91,11 @@ Each renderer must expose this Promise on `window`:
 
 ```typescript
 interface RenderMetadata {
-  width: number;        // Rendered canvas width in pixels
-  height: number;       // Rendered canvas height in pixels
+  width: number;        // Viewport width - size Playwright should resize to
+  height: number;       // Viewport height - size Playwright should resize to
   pageCount: number;    // Total pages/items in document
   pageNumber: number;   // Current page/item being rendered
-  scale: number;        // Scale factor used (e.g., 2.0 for HiDPI)
+  scale: number;        // Scale factor used for rendering (informational)
 }
 
 declare global {
@@ -107,6 +107,23 @@ declare global {
 // Set immediately on page load
 window.renderComplete = renderDocument();
 ```
+
+**Understanding width/height and scale**:
+
+The `width` and `height` values are the dimensions Playwright should resize its viewport to. Playwright then captures a screenshot at `deviceScaleFactor: 2`, producing a final image that is 2× the viewport dimensions.
+
+| Renderer Type | width/height meaning | Example |
+|--------------|---------------------|---------|
+| Canvas-based (PDF) | Canvas element dimensions | PDF at scale 2.0 → canvas 1224×1584 → return 1224×1584 |
+| DOM-based (EPUB, DOCX) | CSS pixel dimensions of content | Content 600×800 CSS px → return 600×800 |
+
+The `scale` field is **informational only** - it tells what quality level the renderer used internally, but does NOT affect how Playwright handles the viewport. Playwright always uses `deviceScaleFactor: 2` regardless of this value.
+
+**Complete flow**:
+1. Renderer returns `{ width: 600, height: 800, scale: 2.0 }`
+2. Playwright calls `page.setViewportSize({ width: 600, height: 800 })`
+3. Playwright captures screenshot with `deviceScaleFactor: 2`
+4. Final image: 1200×1600 pixels
 
 **Promise Resolution**:
 - ✅ Resolve with `RenderMetadata` when rendering is complete
@@ -695,26 +712,29 @@ let fileBase64 = (globalThis as any).fileBase64 || 'PLACEHOLDER';
 **Solution**: Return metadata from the rendering Promise and resize viewport dynamically:
 
 ```typescript
-// Page side: Return actual dimensions
+// Page side: Return canvas dimensions (PDF renders at scale 2.0)
+// Letter page: 612×792 points × 2.0 scale = 1224×1584 canvas pixels
 return {
-  width: Math.ceil(viewport.width),  // e.g., 1224 for Letter at 2×
-  height: Math.ceil(viewport.height), // e.g., 1584 for Letter at 2×
+  width: Math.ceil(viewport.width),  // 1224 (canvas width = viewport width)
+  height: Math.ceil(viewport.height), // 1584 (canvas height = viewport height)
   pageCount: pdf.numPages,
-  scale: 2.0
+  scale: 2.0  // informational - tells us PDF was rendered at 2× quality
 };
 
-// Playwright side: Resize to match
+// Playwright side: Resize viewport to match canvas size
 const metadata = await page.evaluate(async () => {
   return await window.renderComplete;
 });
 
 await page.setViewportSize({
-  width: metadata.width,
-  height: metadata.height,
+  width: metadata.width,   // 1224
+  height: metadata.height, // 1584
 });
+
+// Screenshot with deviceScaleFactor: 2 produces 2448×3168 final image
 ```
 
-Result: Screenshots are exactly the right size with no cropping.
+Result: Screenshots are exactly the right size with no cropping. The final image is 2× the viewport dimensions due to `deviceScaleFactor: 2`.
 
 ## Implementation Status
 
@@ -920,19 +940,21 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
 
 ### Viewport Sizing: Dynamic vs Fixed
 
-**Challenge**: PDFs have intrinsic page sizes (e.g., Letter = 612×792 points), but browser viewport was initially fixed at 1920×1080
+**Challenge**: Documents have varying sizes (PDF pages, EPUB chapters, DOCX content), but browser viewport was initially fixed at 1920×1080
 
 **Solution**: Return metadata from rendering Promise and resize viewport dynamically:
 ```typescript
-// Page side: Return actual dimensions
+// Page side: Return dimensions for viewport sizing
+// For canvas-based (PDF): return canvas dimensions
+// For DOM-based (EPUB/DOCX): return CSS pixel dimensions of content
 return {
-  width: Math.ceil(viewport.width),  // e.g., 1224 for Letter at 2×
-  height: Math.ceil(viewport.height), // e.g., 1584 for Letter at 2×
-  pageCount: pdf.numPages,
-  scale: 2.0
+  width: Math.ceil(contentWidth),   // Viewport width needed
+  height: Math.ceil(contentHeight), // Viewport height needed
+  pageCount: totalPages,
+  scale: 2.0  // Informational only
 };
 
-// Playwright side: Resize to match
+// Playwright side: Resize viewport to match content
 const metadata = await page.evaluate(async () => {
   return await window.renderComplete;
 });
@@ -941,9 +963,11 @@ await page.setViewportSize({
   width: metadata.width,
   height: metadata.height,
 });
+
+// deviceScaleFactor: 2 produces final image at 2× viewport dimensions
 ```
 
-**Result**: Screenshots are exactly the right size with no cropping or whitespace.
+**Result**: Screenshots are exactly the right size with no cropping or whitespace. Final image dimensions = viewport × deviceScaleFactor (2).
 
 ### Good Design Choices Made
 
