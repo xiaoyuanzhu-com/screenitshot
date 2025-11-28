@@ -91,11 +91,13 @@ Each renderer must expose this Promise on `window`:
 
 ```typescript
 interface RenderMetadata {
-  width: number;        // Viewport width - size Playwright should resize to
-  height: number;       // Viewport height - size Playwright should resize to
+  width: number;        // Content width in CSS pixels
+  height: number;       // Content height in CSS pixels
   pageCount: number;    // Total pages/items in document
   pageNumber: number;   // Current page/item being rendered
   scale: number;        // Scale factor used for rendering (informational)
+  clipX?: number;       // Optional: X offset for clip-based screenshot
+  clipY?: number;       // Optional: Y offset for clip-based screenshot
 }
 
 declare global {
@@ -110,20 +112,33 @@ window.renderComplete = renderDocument();
 
 **Understanding width/height and scale**:
 
-The `width` and `height` values are the dimensions Playwright should resize its viewport to. Playwright then captures a screenshot at `deviceScaleFactor: 2`, producing a final image that is 2× the viewport dimensions.
+The `width` and `height` values represent the content dimensions. How Playwright uses them depends on whether `clipX`/`clipY` are provided:
 
-| Renderer Type | width/height meaning | Example |
-|--------------|---------------------|---------|
-| Canvas-based (PDF) | Canvas element dimensions | PDF at scale 2.0 → canvas 1224×1584 → return 1224×1584 |
-| DOM-based (EPUB, DOCX) | CSS pixel dimensions of content | Content 600×800 CSS px → return 600×800 |
+| Approach | When to use | How it works |
+|----------|-------------|--------------|
+| **Viewport resize** | Content fills viewport from (0,0) | Playwright resizes viewport to width×height, then screenshots |
+| **Clip-based** | Content is offset or has whitespace | Playwright uses `clip: {x: clipX, y: clipY, width, height}` to capture exact content area |
+
+| Renderer Type | Approach | Example |
+|--------------|----------|---------|
+| Canvas-based (PDF) | Viewport resize | Canvas at (0,0), exact size known |
+| Fixed-layout (PPTX) | Viewport resize | Fixed 960×540 slide dimensions |
+| DOM-based (EPUB) | Clip-based | Content may be centered/offset in container |
+| DOM-based (DOCX, XLSX) | Viewport resize | Content starts at (0,0) |
 
 The `scale` field is **informational only** - it tells what quality level the renderer used internally, but does NOT affect how Playwright handles the viewport. Playwright always uses `deviceScaleFactor: 2` regardless of this value.
 
-**Complete flow**:
+**Complete flow (Viewport resize approach)**:
 1. Renderer returns `{ width: 600, height: 800, scale: 2.0 }`
 2. Playwright calls `page.setViewportSize({ width: 600, height: 800 })`
 3. Playwright captures screenshot with `deviceScaleFactor: 2`
 4. Final image: 1200×1600 pixels
+
+**Complete flow (Clip-based approach)**:
+1. Renderer returns `{ width: 1334, height: 1831, clipX: 133, clipY: 0, scale: 2.0 }`
+2. Playwright resizes viewport to fit clip area: `page.setViewportSize({ width: 133+1334, height: 1831 })`
+3. Playwright captures screenshot with clip: `page.screenshot({ clip: { x: 133, y: 0, width: 1334, height: 1831 } })`
+4. Final image: 2668×3662 pixels (clip dimensions × deviceScaleFactor)
 
 **Promise Resolution**:
 - ✅ Resolve with `RenderMetadata` when rendering is complete
@@ -735,6 +750,61 @@ await page.setViewportSize({
 ```
 
 Result: Screenshots are exactly the right size with no cropping. The final image is 2× the viewport dimensions due to `deviceScaleFactor: 2`.
+
+#### 4. EPUB Content Bounds Detection (Clip-based Screenshot)
+**Problem**: EPUB content rendered via epub.js may have whitespace around the actual content. The library centers content within a container, creating left/right margins that vary based on content type (text vs images).
+
+**Solution**: Use clip-based screenshots instead of viewport resizing:
+
+1. **Measure actual content bounds** by iterating DOM elements (skip container elements like DIV):
+```typescript
+const containerTags = new Set(['DIV', 'SPAN', 'SECTION', 'ARTICLE', ...]);
+
+allElements.forEach((el) => {
+  const rect = el.getBoundingClientRect();
+  const isContainer = containerTags.has(el.tagName.toUpperCase());
+
+  if (rect.width > 0 && rect.height > 0 && !isContainer) {
+    minLeft = Math.min(minLeft, rect.left);
+    minTop = Math.min(minTop, rect.top);
+    maxRight = Math.max(maxRight, rect.right);
+    maxBottom = Math.max(maxBottom, rect.bottom);
+  }
+});
+```
+
+2. **Return clip coordinates** in metadata:
+```typescript
+return {
+  width: maxRight - minLeft,
+  height: scrollHeight - minTop,
+  clipX: minLeft,
+  clipY: minTop,
+  // ...
+};
+```
+
+3. **Playwright uses clip** instead of viewport resize:
+```typescript
+if (clipX !== undefined && clipY !== undefined) {
+  // Resize viewport to fit entire clip area
+  await page.setViewportSize({
+    width: clipX + metadata.width,
+    height: clipY + metadata.height,
+  });
+
+  // Screenshot with clip captures exact content bounds
+  await page.screenshot({
+    clip: { x: clipX, y: clipY, width: metadata.width, height: metadata.height }
+  });
+}
+```
+
+**Why clip-based is more robust for EPUB**:
+- Content position varies (centered images, text with margins)
+- No layout reflow issues (viewport stays large, we just clip)
+- Works regardless of epub.js internal styling
+- Accurately captures actual content without whitespace
 
 ## Implementation Status
 
