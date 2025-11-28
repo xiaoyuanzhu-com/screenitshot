@@ -95,18 +95,50 @@ export class Renderer {
         return await renderComplete;
       });
 
-      // Resize viewport to match actual rendered content
-      await page.setViewportSize({
-        width: metadata.width,
-        height: metadata.height,
-      });
+      // Check if we need to clip (for EPUB content cropping)
+      const clipX = (metadata as any).clipX;
+      const clipY = (metadata as any).clipY;
 
-      // Take screenshot at exact rendered size
-      await page.screenshot({
-        path: outputPath,
-        type: imageFormat as 'png' | 'jpeg',
-        fullPage: false,
-      });
+      if (clipX !== undefined && clipY !== undefined) {
+        // Resize viewport to ensure clip area is fully visible
+        const requiredWidth = clipX + metadata.width;
+        const requiredHeight = clipY + metadata.height;
+        await page.setViewportSize({
+          width: Math.max(requiredWidth, initialWidth),
+          height: Math.max(requiredHeight, initialHeight),
+        });
+
+        // Wait for layout to stabilize
+        await page.waitForTimeout(100);
+
+        // Use clip to capture just the content area
+        await page.screenshot({
+          path: outputPath,
+          type: imageFormat as 'png' | 'jpeg',
+          clip: {
+            x: clipX,
+            y: clipY,
+            width: metadata.width,
+            height: metadata.height
+          }
+        });
+      } else {
+        // Resize viewport to match actual rendered content
+        await page.setViewportSize({
+          width: metadata.width,
+          height: metadata.height,
+        });
+
+        // Wait for layout to stabilize after viewport resize
+        await page.waitForTimeout(100);
+
+        // Take screenshot at exact rendered size
+        await page.screenshot({
+          path: outputPath,
+          type: imageFormat as 'png' | 'jpeg',
+          fullPage: false,
+        });
+      }
 
       await browser.close();
 

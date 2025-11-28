@@ -14,6 +14,8 @@ interface RenderMetadata {
   pageCount: number;
   pageNumber: number;
   scale: number;
+  clipX?: number;
+  clipY?: number;
 }
 
 declare global {
@@ -110,11 +112,23 @@ async function renderEPUB(): Promise<RenderMetadata> {
     const targetPage = Math.max(1, Math.min(pageNumber, pageCount));
 
     // Use scrolled-doc flow to render full chapter content
-    // This allows measuring actual content height
     const rendition = book.renderTo(container, {
-      width: 600,
+      width: 1600,
       spread: 'none',
-      flow: 'scrolled-doc'  // Scrolled mode to get full content height
+      flow: 'scrolled-doc',
+      allowScriptedContent: true
+    });
+
+    // Inject CSS to remove epub.js default padding/margins
+    rendition.themes.default({
+      'body': {
+        'margin': '0 !important',
+        'padding': '0 !important'
+      },
+      'html': {
+        'margin': '0 !important',
+        'padding': '0 !important'
+      }
     });
 
     // Navigate to the target chapter/section
@@ -130,38 +144,95 @@ async function renderEPUB(): Promise<RenderMetadata> {
 
     // Measure actual content dimensions from the rendered iframe
     const iframe = container.querySelector('iframe') as HTMLIFrameElement;
-    let contentWidth = 600;
-    let contentHeight = 800;
+    let contentWidth = 1600;
+    let contentHeight = 1080;
 
     if (iframe && iframe.contentDocument) {
       const body = iframe.contentDocument.body;
-      if (body) {
-        // Get the actual content dimensions
-        contentWidth = Math.max(body.scrollWidth, body.offsetWidth, 600);
-        contentHeight = Math.max(body.scrollHeight, body.offsetHeight, 100);
+      const html = iframe.contentDocument.documentElement;
 
-        // Add some padding
-        contentWidth = Math.min(contentWidth + 40, 800);
-        contentHeight = contentHeight + 40;
+      if (body && html) {
+        // Force remove margins/padding
+        body.style.margin = '0';
+        body.style.padding = '0';
+        html.style.margin = '0';
+        html.style.padding = '0';
+
+        // Find actual content bounds by checking all elements
+        const allElements = body.querySelectorAll('*');
+        let minLeft = Infinity;
+        let minTop = Infinity;
+        let maxRight = 0;
+        let maxBottom = 0;
+
+        console.log('[EPUB] Scanning', allElements.length, 'elements');
+
+        // Skip generic container elements (div, span, body, etc.) - focus on actual content
+        const containerTags = new Set(['DIV', 'SPAN', 'SECTION', 'ARTICLE', 'MAIN', 'HEADER', 'FOOTER', 'NAV', 'ASIDE']);
+
+        allElements.forEach((el) => {
+          const rect = el.getBoundingClientRect();
+          const tagName = el.tagName.toUpperCase();
+          const isContainer = containerTags.has(tagName);
+
+          if (rect.width > 0 && rect.height > 0) {
+            console.log('[EPUB] Element:', tagName, 'isContainer:', isContainer, 'rect:', {
+              left: rect.left,
+              top: rect.top,
+              right: rect.right,
+              bottom: rect.bottom,
+              width: rect.width,
+              height: rect.height
+            });
+
+            // Skip container elements for bounds calculation
+            if (!isContainer) {
+              minLeft = Math.min(minLeft, rect.left);
+              minTop = Math.min(minTop, rect.top);
+              maxRight = Math.max(maxRight, rect.right);
+              maxBottom = Math.max(maxBottom, rect.bottom);
+            }
+          }
+        });
+
+        // Also check scrollHeight for full content height
+        const scrollHeight = Math.max(
+          body.scrollHeight,
+          html.scrollHeight,
+          maxBottom
+        );
+
+        console.log('[EPUB] Bounds:', { minLeft, minTop, maxRight, maxBottom, scrollHeight });
+
+        // Calculate actual content dimensions (crop to content bounds)
+        if (minLeft !== Infinity) {
+          contentWidth = Math.max(Math.ceil(maxRight - minLeft), 100);
+          // Use scrollHeight if it's larger than measured maxBottom
+          contentHeight = Math.max(Math.ceil(scrollHeight - minTop), 100);
+
+          console.log('[EPUB] Calculated size:', { contentWidth, contentHeight });
+
+          // Store clip coordinates for Playwright
+          const clipX = minLeft;
+          const clipY = minTop;
+
+          console.log('[EPUB] Clip coordinates:', { clipX, clipY, contentWidth, contentHeight });
+
+          // Return with clip info - let Playwright handle the clipping
+          return {
+            width: Math.ceil(contentWidth),
+            height: Math.ceil(contentHeight),
+            pageCount,
+            pageNumber: targetPage,
+            scale,
+            clipX: Math.floor(clipX),
+            clipY: Math.floor(clipY)
+          };
+        }
       }
     }
 
-    // Update container to match content size
-    container.style.width = `${contentWidth}px`;
-    container.style.height = `${contentHeight}px`;
-    container.style.overflow = 'hidden';
-
-    // Also resize the iframe to match
-    if (iframe) {
-      iframe.style.width = `${contentWidth}px`;
-      iframe.style.height = `${contentHeight}px`;
-    }
-
-    // Wait a bit more for any reflow
-    await new Promise(resolve => setTimeout(resolve, 200));
-
-    // Return CSS pixel dimensions - Playwright's deviceScaleFactor handles 2x scaling
-    // This matches how PDF renderer returns viewport dimensions
+    // Fallback return if no content found
     return {
       width: Math.ceil(contentWidth),
       height: Math.ceil(contentHeight),
