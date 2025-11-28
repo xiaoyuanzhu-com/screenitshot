@@ -26,7 +26,7 @@ Inspired by [MarkItDown](https://github.com/microsoft/markitdown).
 | `.rtf` | [rtf.js](https://github.com/tbluemel/rtf.js) | ✅ |
 | `.ipynb` | [marked](https://github.com/markedjs/marked) + [Shiki](https://github.com/shikijs/shiki) | ✅ |
 | `.tex` | [LaTeX.js](https://github.com/michael-brade/LaTeX.js) | ✅ |
-| source code | [Shiki](https://github.com/shikijs/shiki) | 📋 TODO |
+| source code | [Shiki](https://github.com/shikijs/shiki) | ✅ |
 | URL | [Chromium](https://www.chromium.org/chromium-projects/) | 📋 TODO |
 | `.mmd` (Mermaid) | [mermaid.js](https://github.com/mermaid-js/mermaid) | 📋 TODO |
 | location (lat/lng) | [MapLibre GL JS](https://github.com/maplibre/maplibre-gl-js) | 📋 TODO |

@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run build:pdf && npm run build:docx && npm run build:xlsx && npm run build:pptx && npm run build:epub && npm run build:md && npm run build:html && npm run build:csv && npm run build:rtf && npm run build:ipynb && npm run build:tex",
+    "build": "npm run build:pdf && npm run build:docx && npm run build:xlsx && npm run build:pptx && npm run build:epub && npm run build:md && npm run build:html && npm run build:csv && npm run build:rtf && npm run build:ipynb && npm run build:tex && npm run build:code",
+    "build:code": "VITE_INPUT=code vite build",
     "build:tex": "VITE_INPUT=tex vite build",
     "build:ipynb": "VITE_INPUT=ipynb vite build",
     "build:rtf": "VITE_INPUT=rtf vite build",

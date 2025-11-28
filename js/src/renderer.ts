@@ -1,6 +1,6 @@
 import { chromium, type Page } from 'playwright';
 import { readFile } from 'fs/promises';
-import { resolve, dirname } from 'path';
+import { resolve, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import type { FileFormat, ScreenshotOptions, ScreenshotResult } from './types.js';
 
@@ -21,6 +21,7 @@ export class Renderer {
       rtf: resolve(__dirname, '../templates/rtf.html'),
       ipynb: resolve(__dirname, '../templates/ipynb.html'),
       tex: resolve(__dirname, '../templates/tex.html'),
+      code: resolve(__dirname, '../templates/code.html'),
       unknown: '',
     };
 
@@ -34,14 +35,16 @@ export class Renderer {
   private async injectDataIntoPage(
     page: Page,
     fileBase64: string,
-    pageNumber: number = 1
+    pageNumber: number = 1,
+    fileName: string = ''
   ): Promise<void> {
     // Inject data into page globals before template loads
-    await page.addInitScript(({ fileBase64: fb64, pageNum }: { fileBase64: string; pageNum: number }) => {
+    await page.addInitScript(({ fileBase64: fb64, pageNum, fName }: { fileBase64: string; pageNum: number; fName: string }) => {
       // Override the placeholder values
       (globalThis as any).fileBase64 = fb64;
       (globalThis as any).pageNumber = pageNum;
-    }, { fileBase64, pageNum: pageNumber });
+      (globalThis as any).fileName = fName;
+    }, { fileBase64, pageNum: pageNumber, fName: fileName });
   }
 
   async render(
@@ -82,8 +85,9 @@ export class Renderer {
       const fileData = await readFile(inputPath);
       const fileBase64 = fileData.toString('base64');
 
-      // Inject data before loading template
-      await this.injectDataIntoPage(page, fileBase64, pageNumber);
+      // Inject data before loading template (include filename for code format)
+      const fileName = basename(inputPath);
+      await this.injectDataIntoPage(page, fileBase64, pageNumber, fileName);
 
       // Load template
       const templatePath = this.getTemplatePath(format);
