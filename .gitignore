@@ -38,6 +38,7 @@ Thumbs.db
 render/dist/
 js/dist/
 js/templates/
+python/screenitshot/templates/
 
 # Test files
 test*.pdf

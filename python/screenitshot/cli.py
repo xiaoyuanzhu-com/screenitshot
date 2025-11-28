@@ -20,18 +20,6 @@ def main():
         help="Output image format (default: png)",
     )
     parser.add_argument(
-        "-w", "--width",
-        type=int,
-        default=1920,
-        help="Viewport width (default: 1920)",
-    )
-    parser.add_argument(
-        "-H", "--height",
-        type=int,
-        default=1080,
-        help="Viewport height (default: 1080)",
-    )
-    parser.add_argument(
         "-p", "--page",
         type=int,
         default=1,
@@ -51,11 +39,11 @@ def main():
             args.input,
             output=args.output,
             format=args.format,
-            width=args.width,
-            height=args.height,
             page=args.page,
         )
-        print(f"✓ Screenshot saved to {result}")
+        print(f"Saved to {result.path}")
+        print(f"  Format: {result.format}")
+        print(f"  Size: {result.width}x{result.height}")
     except ScreenitshotError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
