@@ -15,13 +15,13 @@ Convert various file formats to high-quality screenshots using browser-based ren
 ### CLI (One-liner)
 
 ```bash
-# With npx (no installation)
+# With npx
 npx screenitshot document.pdf output.png
 
-# With uvx (Python, no installation)
+# With uvx
 uvx screenitshot document.pdf output.png
 
-# With Docker (no installation)
+# With docker
 docker run -v $(pwd):/app screenitshot/screenitshot /app/document.pdf /app/output.png
 ```
 
