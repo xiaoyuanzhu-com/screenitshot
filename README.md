@@ -71,9 +71,10 @@ pip install screenitshot
 | File Extension | Library | Version | Status |
 |----------------|---------|---------|--------|
 | `.pdf` | [PDF.js](https://github.com/mozilla/pdf.js) | 4.0.379 | ✅ |
+| `.epub` | [epub.js](https://github.com/futurepress/epub.js) | 0.3.93 | ✅ |
 | `.docx` | [docx-preview](https://github.com/VolodymyrBaydalka/docxjs) | 0.3.7 | ✅ |
 | `.xlsx` | [ExcelJS](https://github.com/exceljs/exceljs) | 4.4.0 | ✅ |
-| `.pptx` | - | - | ❌ |
+| `.pptx` | [pptx-preview](https://github.com/nickvdyck/pptx-preview) | 1.0.7 | ✅ |
 
 ## Documentation
 

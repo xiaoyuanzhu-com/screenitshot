@@ -810,7 +810,7 @@ docker run -v $(pwd):/app screenitshot:local /app/sample.pdf /app/output-docker.
 
 ### Phase 2: Additional Formats (In Progress)
 
-- EPUB support (epub.js)
+- EPUB support (epub.js) ✅
 - DOCX support (docx-preview) ✅
 - XLSX support (ExcelJS) ✅
 - PPTX support (pptx-preview) ✅
