@@ -402,7 +402,7 @@ async function renderXLSX(): Promise<RenderMetadata> {
     await new Promise(resolve => setTimeout(resolve, 100));
 
     // Calculate dimensions with scale - use exact table size
-    const scale = 1.0;
+    const scale = 2.0;
     const tableRect = table.getBoundingClientRect();
     const width = Math.ceil(tableRect.width * scale);
     const height = Math.ceil(tableRect.height * scale);

@@ -107,7 +107,7 @@ async function renderPDF(): Promise<RenderMetadata> {
     // Use configured page number
     const page = await pdf.getPage(pageNumber);
 
-    const scale = 1.0;
+    const scale = 2.0;
     const viewport = page.getViewport({ scale });
     const context = canvas.getContext('2d');
 
