@@ -275,9 +275,20 @@ async function renderXLSX(): Promise<RenderMetadata> {
     const table = document.createElement('table');
     table.className = 'xlsx-table';
 
-    // Determine actual data bounds
-    const rowCount = worksheet.rowCount;
-    const colCount = worksheet.columnCount;
+    // Find actual data bounds (not just rowCount/columnCount which may include empty cells)
+    let maxRow = 0;
+    let maxCol = 0;
+
+    worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+      if (rowNumber > maxRow) maxRow = rowNumber;
+      row.eachCell({ includeEmpty: false }, (cell, colNumber) => {
+        if (colNumber > maxCol) maxCol = colNumber;
+      });
+    });
+
+    // Use at least 1 row/col, fall back to worksheet counts if no data found
+    const rowCount = maxRow || worksheet.rowCount || 1;
+    const colCount = maxCol || worksheet.columnCount || 1;
 
     // Create header row (column letters)
     const thead = document.createElement('thead');
@@ -292,13 +303,7 @@ async function renderXLSX(): Promise<RenderMetadata> {
     for (let col = 1; col <= colCount; col++) {
       const th = document.createElement('th');
       th.textContent = columnToLetter(col);
-
-      // Apply column width if set
-      const column = worksheet.getColumn(col);
-      if (column.width) {
-        th.style.width = `${column.width * 7}px`; // Approximate char width
-      }
-
+      // Let columns auto-size based on content (no explicit width)
       headerRow.appendChild(th);
     }
     thead.appendChild(headerRow);
@@ -396,19 +401,34 @@ async function renderXLSX(): Promise<RenderMetadata> {
     // Wait for rendering
     await new Promise(resolve => setTimeout(resolve, 100));
 
-    // Calculate dimensions with scale
-    const scale = 2.0;
+    // Calculate dimensions with scale - use exact table size
+    const scale = 1.0;
     const tableRect = table.getBoundingClientRect();
-    const width = Math.ceil((tableRect.width + 40) * scale); // Add padding
-    const height = Math.ceil((tableRect.height + 40) * scale);
+    const width = Math.ceil(tableRect.width * scale);
+    const height = Math.ceil(tableRect.height * scale);
 
-    return {
+    const metadata = {
       width,
       height,
       pageCount,
       pageNumber: targetPage,
-      scale
+      scale,
+      // Debug info
+      tableRect: {
+        width: tableRect.width,
+        height: tableRect.height,
+        top: tableRect.top,
+        left: tableRect.left
+      },
+      viewport: {
+        width: window.innerWidth,
+        height: window.innerHeight
+      }
     };
+
+    console.log('RenderMetadata:', metadata);
+
+    return metadata;
   } catch (error) {
     console.error('Error rendering XLSX:', error);
     throw error;

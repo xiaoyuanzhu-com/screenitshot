@@ -45,10 +45,15 @@ export class Renderer {
     const {
       output,
       format: imageFormat = 'png',
-      width = 1920,
-      height = 1080,
+      width,
+      height,
       page: pageNumber = 1,
     } = options;
+
+    // Use small initial viewport - content will determine final size
+    // For formats like XLSX, large viewport causes table to expand to fill it
+    const initialWidth = width || 800;
+    const initialHeight = height || 600;
 
     const outputPath = output || inputPath.replace(/\.[^.]+$/, `.${imageFormat}`);
 
@@ -58,8 +63,12 @@ export class Renderer {
     });
 
     try {
+      // Use deviceScaleFactor for high-quality rendering (2x = retina quality)
+      const deviceScaleFactor = 2;
+
       const page = await browser.newPage({
-        viewport: { width, height },
+        viewport: { width: initialWidth, height: initialHeight },
+        deviceScaleFactor,
       });
 
       // Read and encode file as base64
@@ -100,11 +109,15 @@ export class Renderer {
 
       await browser.close();
 
+      // Actual image size is viewport * deviceScaleFactor
+      const actualWidth = metadata.width * deviceScaleFactor;
+      const actualHeight = metadata.height * deviceScaleFactor;
+
       return {
         path: outputPath,
         format: imageFormat,
-        width: metadata.width,
-        height: metadata.height,
+        width: actualWidth,
+        height: actualHeight,
       };
     } catch (error) {
       await browser.close();

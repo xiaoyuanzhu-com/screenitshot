@@ -14,19 +14,15 @@
       background: white;
       overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      font-size: 14px;
+      font-size: 12px;
     }
     #container {
-      width: 100%;
-      height: 100vh;
-      display: flex;
-      justify-content: flex-start;
-      align-items: flex-start;
+      display: inline-block;
       background: white;
     }
     #xlsx-container {
+      display: inline-block;
       background: white;
-      padding: 20px;
     }
     /* Excel-like table styling */
     .xlsx-table {
@@ -36,12 +32,11 @@
     .xlsx-table th,
     .xlsx-table td {
       border: 1px solid #d0d0d0;
-      padding: 4px 8px;
+      padding: 2px 6px;
       text-align: left;
       vertical-align: middle;
       white-space: nowrap;
-      min-width: 64px;
-      max-width: 300px;
+      max-width: 400px;
       overflow: hidden;
       text-overflow: ellipsis;
     }
@@ -51,7 +46,6 @@
       color: #666;
       text-align: center;
       font-weight: normal;
-      min-width: 40px;
       border-right: 2px solid #c0c0c0;
     }
     /* Column header (A, B, C...) */
