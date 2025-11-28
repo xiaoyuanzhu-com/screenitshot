@@ -1,5 +1,5 @@
 """
-screenitshot - Convert various file formats to high-quality screenshots
+ScreenItShot - Convert various file formats to high-quality screenshots
 
 This is a Python binding that wraps the npm package 'screenitshot'.
 Requires Node.js and the npm package to be installed globally.

@@ -1,4 +1,4 @@
-# Screenitshot
+# ScreenItShot
 
 Convert various file formats to high-quality screenshots using browser-based rendering.
 
