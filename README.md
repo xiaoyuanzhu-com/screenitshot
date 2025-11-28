@@ -58,13 +58,13 @@ screenshot(
 
 | File Extension | Library | Version |
 |----------------|---------|---------|
-| `.pdf` | [PDF.js](https://mozilla.github.io/pdf.js/) | 4.0.379 |
+| `.pdf` | [PDF.js](https://github.com/mozilla/pdf.js) | 4.0.379 |
 
 ## Installation
 
 ### npm
 ```bash
-npm install -g screenitshot
+npm install screenitshot
 ```
 
 ### Python
