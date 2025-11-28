@@ -19,6 +19,7 @@ export class Renderer {
       html: resolve(__dirname, '../templates/html.html'),
       csv: resolve(__dirname, '../templates/csv.html'),
       rtf: resolve(__dirname, '../templates/rtf.html'),
+      ipynb: resolve(__dirname, '../templates/ipynb.html'),
       unknown: '',
     };
 

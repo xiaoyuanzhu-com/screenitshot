@@ -19,6 +19,7 @@ export async function detectFormat(filePath: string): Promise<FileFormat> {
     '.csv': 'csv',
     '.tsv': 'csv',
     '.rtf': 'rtf',
+    '.ipynb': 'ipynb',
   };
 
   if (ext in extensionMap) {
