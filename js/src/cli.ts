@@ -54,6 +54,11 @@ program
         console.error('Currently supported: PDF');
       } else if (err.message.includes('page')) {
         console.error(`Error: Invalid page number or page not found`);
+        // Show stack trace in debug mode
+        if (process.env.DEBUG) {
+          console.error('Full error:', err.message);
+          console.error(err.stack);
+        }
       } else {
         console.error(`Error: ${err.message}`);
 
