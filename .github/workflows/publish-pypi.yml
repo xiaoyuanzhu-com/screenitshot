@@ -36,10 +36,3 @@ jobs:
           packages-dir: python/dist/
           # Uses trusted publishing (OIDC) - no token needed!
           # Configure at: https://pypi.org/manage/account/publishing/
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

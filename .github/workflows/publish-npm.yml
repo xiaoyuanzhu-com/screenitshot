@@ -47,11 +47,6 @@ jobs:
       - name: Publish to npm with OIDC (trusted publishing)
         working-directory: ./js
         run: npm publish --provenance
-        env:
-          # For first publish: Add NODE_AUTH_TOKEN secret with npm token
-          # After package exists: Configure OIDC at https://www.npmjs.com/package/screenitshot/access
-          # Then remove the NODE_AUTH_TOKEN secret - OIDC will take over automatically
-          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
