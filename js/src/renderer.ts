@@ -22,6 +22,7 @@ export class Renderer {
       ipynb: resolve(__dirname, '../templates/ipynb.html'),
       tex: resolve(__dirname, '../templates/tex.html'),
       code: resolve(__dirname, '../templates/code.html'),
+      url: resolve(__dirname, '../templates/url.html'),
       unknown: '',
     };
 
@@ -80,6 +81,37 @@ export class Renderer {
         viewport: { width: initialWidth, height: initialHeight },
         deviceScaleFactor,
       });
+
+      // Special handling for URL format - navigate directly to the URL
+      if (format === 'url') {
+        // Read URL from file (file contains just the URL string)
+        const fileData = await readFile(inputPath);
+        const url = fileData.toString('utf-8').trim();
+
+        // Set a reasonable viewport for webpage screenshots
+        const webWidth = width || 1280;
+        const webHeight = height || 800;
+        await page.setViewportSize({ width: webWidth, height: webHeight });
+
+        // Navigate to URL and wait for network idle
+        await page.goto(url, { waitUntil: 'networkidle' });
+
+        // Take screenshot
+        await page.screenshot({
+          path: outputPath,
+          type: imageFormat as 'png' | 'jpeg',
+          fullPage: false,
+        });
+
+        await browser.close();
+
+        return {
+          path: outputPath,
+          format: imageFormat,
+          width: webWidth * deviceScaleFactor,
+          height: webHeight * deviceScaleFactor,
+        };
+      }
 
       // Read and encode file as base64
       const fileData = await readFile(inputPath);

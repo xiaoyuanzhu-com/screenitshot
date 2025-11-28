@@ -91,6 +91,8 @@ export async function detectFormat(filePath: string): Promise<FileFormat> {
     '.patch': 'code',
     '.mdx': 'code',
     '.astro': 'code',
+    // URL file extension
+    '.url': 'url',
   };
 
   if (ext in extensionMap) {
