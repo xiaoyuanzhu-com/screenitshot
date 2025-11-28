@@ -55,12 +55,6 @@ fi
 
 echo -e "${GREEN}✓ Version bumped to $NEW_VERSION${NC}"
 echo ""
-
-# Show diff
-echo -e "${YELLOW}Changes:${NC}"
-git diff
-
-echo ""
 echo "  → Staging changes..."
 git add -A
 
@@ -81,4 +75,4 @@ echo "GitHub Actions will now:"
 echo "  • Publish to npm (https://www.npmjs.com/package/screenitshot)"
 echo "  • Publish to PyPI (https://pypi.org/project/screenitshot/)"
 echo "  • Publish to ghcr.io"
-echo "  • Create GitHub Release at https://github.com/$(git config --get remote.origin.url | sed 's/.*://;s/.git$//')/releases"
+echo "  • Create GitHub Release"
