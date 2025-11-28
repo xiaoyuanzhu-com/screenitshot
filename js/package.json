@@ -26,6 +26,10 @@
   ],
   "author": "",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xiaoyuanzhu-com/screenitshot"
+  },
   "dependencies": {
     "playwright": "^1.40.1",
     "commander": "^11.1.0"
