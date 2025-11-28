@@ -12,7 +12,7 @@ Convert various file formats to high-quality screenshots using browser-based ren
 
 ## Quick Start
 
-### CLI (One-liner)
+### CLI Usage
 
 ```bash
 # With npx
@@ -54,23 +54,23 @@ screenshot(
 )
 ```
 
+### Installation
+
+**JavaScript**
+```bash
+npm install screenitshot
+```
+
+**Python**
+```bash
+pip install screenitshot
+```
+
 ## Supported Formats
 
 | File Extension | Library | Version |
 |----------------|---------|---------|
 | `.pdf` | [PDF.js](https://github.com/mozilla/pdf.js) | 4.0.379 |
-
-## Installation
-
-### npm
-```bash
-npm install screenitshot
-```
-
-### Python
-```bash
-pip install screenitshot
-```
 
 ## Documentation
 
