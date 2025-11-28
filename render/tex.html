@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LaTeX Renderer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: white;
+      overflow: hidden;
+    }
+    #container {
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px;
+    }
+    #tex-container {
+      max-width: 800px;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <div id="tex-container"></div>
+  </div>
+  <script type="module" src="./tex.ts"></script>
+</body>
+</html>

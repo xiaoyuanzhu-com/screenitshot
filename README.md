@@ -25,7 +25,7 @@ Inspired by [MarkItDown](https://github.com/microsoft/markitdown).
 | `.csv` | [PapaParse](https://github.com/mholt/PapaParse) | ✅ |
 | `.rtf` | [rtf.js](https://github.com/tbluemel/rtf.js) | ✅ |
 | `.ipynb` | [marked](https://github.com/markedjs/marked) + [Shiki](https://github.com/shikijs/shiki) | ✅ |
-| `.tex` | [LaTeX.js](https://github.com/michael-brade/LaTeX.js) | 📋 TODO |
+| `.tex` | [LaTeX.js](https://github.com/michael-brade/LaTeX.js) | ✅ |
 | source code | [Shiki](https://github.com/shikijs/shiki) | 📋 TODO |
 | URL | [Chromium](https://www.chromium.org/chromium-projects/) | 📋 TODO |
 | `.mmd` (Mermaid) | [mermaid.js](https://github.com/mermaid-js/mermaid) | 📋 TODO |

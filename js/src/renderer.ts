@@ -20,6 +20,7 @@ export class Renderer {
       csv: resolve(__dirname, '../templates/csv.html'),
       rtf: resolve(__dirname, '../templates/rtf.html'),
       ipynb: resolve(__dirname, '../templates/ipynb.html'),
+      tex: resolve(__dirname, '../templates/tex.html'),
       unknown: '',
     };
 

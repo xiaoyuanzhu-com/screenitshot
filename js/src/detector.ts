@@ -20,6 +20,8 @@ export async function detectFormat(filePath: string): Promise<FileFormat> {
     '.tsv': 'csv',
     '.rtf': 'rtf',
     '.ipynb': 'ipynb',
+    '.tex': 'tex',
+    '.latex': 'tex',
   };
 
   if (ext in extensionMap) {
