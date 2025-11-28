@@ -15,6 +15,7 @@ export class Renderer {
       docx: resolve(__dirname, '../templates/docx.html'),
       xlsx: resolve(__dirname, '../templates/xlsx.html'),
       pptx: resolve(__dirname, '../templates/pptx.html'),
+      md: resolve(__dirname, '../templates/md.html'),
       unknown: '',
     };
 

@@ -5,12 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run build:pdf && npm run build:docx && npm run build:xlsx && npm run build:pptx && npm run build:epub",
+    "build": "npm run build:pdf && npm run build:docx && npm run build:xlsx && npm run build:pptx && npm run build:epub && npm run build:md",
     "build:pdf": "VITE_INPUT=pdf vite build",
     "build:docx": "VITE_INPUT=docx vite build",
     "build:xlsx": "VITE_INPUT=xlsx vite build",
     "build:pptx": "VITE_INPUT=pptx vite build",
     "build:epub": "VITE_INPUT=epub vite build",
+    "build:md": "VITE_INPUT=md vite build",
     "preview": "vite preview",
     "lint": "eslint \"*.ts\"",
     "lint:fix": "eslint \"*.ts\" --fix"
@@ -19,6 +20,7 @@
     "docx-preview": "^0.3.7",
     "epubjs": "^0.3.93",
     "exceljs": "^4.4.0",
+    "marked": "^17.0.1",
     "pdfjs-dist": "^4.0.379",
     "pptx-preview": "^1.0.7"
   },

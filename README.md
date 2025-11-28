@@ -20,7 +20,7 @@ Inspired by [MarkItDown](https://github.com/microsoft/markitdown).
 | `.docx` | [docxjs](https://github.com/VolodymyrBaydalka/docxjs) | ✅ |
 | `.xlsx` | [ExcelJS](https://github.com/exceljs/exceljs) | ✅ |
 | `.pptx` | [pptx-preview](https://github.com/niconiahi/pptx-preview) | ✅ |
-| `.md` | [marked](https://github.com/markedjs/marked) | 📋 TODO |
+| `.md` | [marked](https://github.com/markedjs/marked) | ✅ |
 | `.html` | [Chromium](https://www.chromium.org/chromium-projects/) | 📋 TODO |
 | `.csv` | [PapaParse](https://github.com/mholt/PapaParse) | 📋 TODO |
 | `.rtf` | [rtf.js](https://github.com/niconiahi/rtf.js) | 📋 TODO |
