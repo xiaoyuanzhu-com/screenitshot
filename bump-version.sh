@@ -61,46 +61,24 @@ echo -e "${YELLOW}Changes:${NC}"
 git diff
 
 echo ""
-echo -e "${YELLOW}Commit and tag these changes? (y/N):${NC}"
-read -r CONFIRM
+echo "  → Staging changes..."
+git add -A
 
-if [[ "$CONFIRM" =~ ^[Yy]$ ]]; then
-  echo "  → Staging changes..."
-  git add -A
+echo "  → Creating commit..."
+git commit -m "chore: bump version to $NEW_VERSION"
 
-  echo "  → Creating commit..."
-  git commit -m "chore: bump version to $NEW_VERSION"
+echo "  → Creating tag v$NEW_VERSION..."
+git tag "v$NEW_VERSION"
 
-  echo "  → Creating tag v$NEW_VERSION..."
-  git tag "v$NEW_VERSION"
+echo "  → Pushing to origin..."
+CURRENT_BRANCH=$(git branch --show-current)
+git push origin "$CURRENT_BRANCH" --tags
 
-  echo ""
-  echo -e "${GREEN}✓ Committed and tagged!${NC}"
-  echo ""
-  echo -e "${YELLOW}Push to remote? (y/N):${NC}"
-  read -r PUSH_CONFIRM
-
-  if [[ "$PUSH_CONFIRM" =~ ^[Yy]$ ]]; then
-    echo "  → Pushing to origin..."
-    CURRENT_BRANCH=$(git branch --show-current)
-    git push origin "$CURRENT_BRANCH" --tags
-
-    echo ""
-    echo -e "${GREEN}✓ Pushed to origin!${NC}"
-    echo ""
-    echo "GitHub Actions will now:"
-    echo "  • Publish to npm (https://www.npmjs.com/package/screenitshot)"
-    echo "  • Publish to PyPI (https://pypi.org/project/screenitshot/)"
-    echo "  • Publish to ghcr.io (https://github.com/users/$(git config user.name)/packages)"
-    echo "  • Create GitHub Release"
-  else
-    echo ""
-    echo "Skipped push. Run manually when ready:"
-    echo "  git push origin $(git branch --show-current) --tags"
-  fi
-else
-  echo ""
-  echo "Skipped commit. Changes are ready to commit manually:"
-  echo "  git add -A && git commit -m 'chore: bump version to $NEW_VERSION' && git tag v$NEW_VERSION"
-  echo "  git push origin $(git branch --show-current) --tags"
-fi
+echo ""
+echo -e "${GREEN}✓ Version bumped, committed, tagged, and pushed!${NC}"
+echo ""
+echo "GitHub Actions will now:"
+echo "  • Publish to npm (https://www.npmjs.com/package/screenitshot)"
+echo "  • Publish to PyPI (https://pypi.org/project/screenitshot/)"
+echo "  • Publish to ghcr.io"
+echo "  • Create GitHub Release at https://github.com/$(git config --get remote.origin.url | sed 's/.*://;s/.git$//')/releases"
