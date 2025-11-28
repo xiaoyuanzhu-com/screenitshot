@@ -18,6 +18,7 @@ export async function detectFormat(filePath: string): Promise<FileFormat> {
     '.htm': 'html',
     '.csv': 'csv',
     '.tsv': 'csv',
+    '.rtf': 'rtf',
   };
 
   if (ext in extensionMap) {

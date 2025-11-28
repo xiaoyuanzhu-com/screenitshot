@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RTF Renderer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: white;
+      overflow: hidden;
+    }
+    #container {
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px;
+    }
+    #rtf-container {
+      max-width: 800px;
+      width: 100%;
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 12pt;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <div id="rtf-container"></div>
+  </div>
+  <script type="module" src="./rtf.ts"></script>
+</body>
+</html>

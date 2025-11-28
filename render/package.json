@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run build:pdf && npm run build:docx && npm run build:xlsx && npm run build:pptx && npm run build:epub && npm run build:md && npm run build:html && npm run build:csv",
+    "build": "npm run build:pdf && npm run build:docx && npm run build:xlsx && npm run build:pptx && npm run build:epub && npm run build:md && npm run build:html && npm run build:csv && npm run build:rtf",
+    "build:rtf": "VITE_INPUT=rtf vite build",
     "build:pdf": "VITE_INPUT=pdf vite build",
     "build:docx": "VITE_INPUT=docx vite build",
     "build:xlsx": "VITE_INPUT=xlsx vite build",
@@ -26,7 +27,8 @@
     "marked": "^17.0.1",
     "papaparse": "^5.5.3",
     "pdfjs-dist": "^4.0.379",
-    "pptx-preview": "^1.0.7"
+    "pptx-preview": "^1.0.7",
+    "rtf.js": "^3.0.9"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",

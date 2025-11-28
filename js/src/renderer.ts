@@ -18,6 +18,7 @@ export class Renderer {
       md: resolve(__dirname, '../templates/md.html'),
       html: resolve(__dirname, '../templates/html.html'),
       csv: resolve(__dirname, '../templates/csv.html'),
+      rtf: resolve(__dirname, '../templates/rtf.html'),
       unknown: '',
     };
 

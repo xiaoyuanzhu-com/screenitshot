@@ -21,4 +21,4 @@ export interface RenderMetadata {
   scale: number;
 }
 
-export type FileFormat = 'pdf' | 'epub' | 'docx' | 'xlsx' | 'pptx' | 'md' | 'html' | 'csv' | 'unknown';
+export type FileFormat = 'pdf' | 'epub' | 'docx' | 'xlsx' | 'pptx' | 'md' | 'html' | 'csv' | 'rtf' | 'unknown';
