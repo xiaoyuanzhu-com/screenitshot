@@ -11,6 +11,7 @@ export async function detectFormat(filePath: string): Promise<FileFormat> {
     '.epub': 'epub',
     '.docx': 'docx',
     '.xlsx': 'xlsx',
+    '.pptx': 'pptx',
   };
 
   if (ext in extensionMap) {

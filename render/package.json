@@ -5,10 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run build:pdf && npm run build:docx && npm run build:xlsx",
+    "build": "npm run build:pdf && npm run build:docx && npm run build:xlsx && npm run build:pptx",
     "build:pdf": "VITE_INPUT=pdf vite build",
     "build:docx": "VITE_INPUT=docx vite build",
     "build:xlsx": "VITE_INPUT=xlsx vite build",
+    "build:pptx": "VITE_INPUT=pptx vite build",
     "preview": "vite preview",
     "lint": "eslint \"*.ts\"",
     "lint:fix": "eslint \"*.ts\" --fix"
@@ -16,7 +17,8 @@
   "dependencies": {
     "docx-preview": "^0.3.7",
     "exceljs": "^4.4.0",
-    "pdfjs-dist": "^4.0.379"
+    "pdfjs-dist": "^4.0.379",
+    "pptx-preview": "^1.0.7"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",

@@ -813,6 +813,7 @@ docker run -v $(pwd):/app screenitshot:local /app/sample.pdf /app/output-docker.
 - EPUB support (epub.js)
 - DOCX support (docx-preview) ✅
 - XLSX support (ExcelJS) ✅
+- PPTX support (pptx-preview) ✅
 - Markdown support
 - HTML support
 

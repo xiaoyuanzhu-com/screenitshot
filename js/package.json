@@ -10,7 +10,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc && npm run copy-templates",
-    "copy-templates": "mkdir -p templates && cp ../render/dist/pdf.html ../render/dist/docx.html ../render/dist/xlsx.html templates/",
+    "copy-templates": "mkdir -p templates && cp ../render/dist/pdf.html ../render/dist/docx.html ../render/dist/xlsx.html ../render/dist/pptx.html templates/",
     "dev": "tsc --watch",
     "start": "npm run build && node dist/cli.js",
     "lint": "eslint \"src/**/*.ts\"",

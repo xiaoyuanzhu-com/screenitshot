@@ -14,6 +14,7 @@ export class Renderer {
       epub: resolve(__dirname, '../templates/epub.html'),
       docx: resolve(__dirname, '../templates/docx.html'),
       xlsx: resolve(__dirname, '../templates/xlsx.html'),
+      pptx: resolve(__dirname, '../templates/pptx.html'),
       unknown: '',
     };
 
