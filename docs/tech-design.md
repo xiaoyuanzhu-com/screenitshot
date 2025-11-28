@@ -7,7 +7,7 @@
 **Core implementation**: Node.js package (primary)
 **Language bindings**: Python, and potentially other languages (Go, Rust, etc.)
 
-**Current Status**: Phase 1 MVP completed - PDF support fully functional across all platforms (npm, Python, Docker)
+**Current Status**: Phase 2 in progress - PDF, DOCX, and XLSX support functional. See [Supported Formats](../README.md#supported-formats) for details.
 
 ## Architecture
 
@@ -289,10 +289,8 @@ When creating a new renderer (e.g., `epub.html`):
 - **Vite**: Build tool for ES6/TypeScript compilation and bundling
 - **TypeScript**: Type-safe development
 
-### JS Rendering Libraries (Examples)
-- PDF: [PDF.js](https://github.com/mozilla/pdf.js) (pinned version)
-- EPUB: [EPUB.js](https://github.com/futurepress/epub.js) (pinned version)
-- Additional format libraries loaded via templates (version-pinned)
+### JS Rendering Libraries
+See [Supported Formats](../README.md#supported-formats) for current list.
 
 ### Dependency Pinning Strategy
 All dependencies use exact versions:
@@ -371,40 +369,11 @@ This single-file approach:
 ## Project Structure
 
 ```
-screenitshot/                  # Monorepo
-├── render/                    # Vite project for templates
-│   ├── package.json
-│   ├── vite.config.ts         # Single-file build config (vite-plugin-singlefile)
-│   ├── tsconfig.json
-│   ├── pdf.html               # PDF template (source)
-│   ├── pdf.ts                 # PDF rendering logic (source)
-│   ├── index.html             # Test/dev page (source)
-│   └── dist/                  # Built output: self-contained HTML files
-│       └── pdf.html           # Single 1.6MB file with all JS inlined
-│
-├── js/                        # Node.js package & CLI
-│   ├── package.json           # npm: screenitshot
-│   ├── tsconfig.json
-│   ├── src/
-│   │   ├── index.ts           # Programmatic API
-│   │   ├── cli.ts             # CLI entry point
-│   │   ├── renderer.ts        # Playwright browser automation
-│   │   ├── detector.ts        # Format detection
-│   │   └── types.ts           # Shared types (including RenderMetadata)
-│   ├── templates/             # Copied from render/dist/ at build time
-│   │   └── pdf.html           # Self-contained template (no assets folder)
-│   └── dist/                  # Compiled JS
-│
-├── python/                    # Python binding
-│   ├── pyproject.toml         # PyPI: screenitshot
-│   ├── screenitshot/
-│   │   ├── __init__.py        # Programmatic API
-│   │   └── cli.py             # CLI entry point
-│   └── README.md
-│
-└── docker/
-    ├── Dockerfile             # Based on npm package
-    └── README.md
+screenitshot/
+├── render/          # Vite project - format templates (*.html, *.ts)
+├── js/              # Node.js package & CLI
+├── python/          # Python binding (thin wrapper)
+└── docker/          # Docker image
 ```
 
 ## Build & Distribution
@@ -585,22 +554,11 @@ flowchart LR
 
 ### Render Quality Control
 
-**Default Quality Settings** (High-quality by default):
-- **Viewport**: 1920×1080 (Full HD browser window)
-- **Scale Factor**: 2.0× (Retina/HiDPI rendering)
-- **Effective Resolution**: 3840×2160 canvas (4K quality)
-- **Output Format**: PNG (lossless)
+**Default Settings**:
+- 2× pixel density (Retina/HiDPI quality)
+- PNG output (lossless)
 
-**Rationale**:
-- 2× scale ensures crisp text and sharp details
-- 1920×1080 viewport accommodates most document layouts
-- PNG preserves quality without compression artifacts
-- Users can override for specific needs (JPEG for smaller files, custom viewport sizes)
-
-**Quality vs Performance Tradeoffs**:
-- Higher scale (2×) = better quality but larger files and slower rendering
-- PDF pages render at their intrinsic size × scale factor
-- Browser viewport should match rendered canvas size to avoid cropping
+All renderers output 2× quality via `deviceScaleFactor: 2` in Playwright.
 
 ### User Customization Options
 
@@ -807,16 +765,11 @@ Result: Screenshots are exactly the right size with no cropping.
 - ✅ Playwright rendering working
 
 **Key Files**:
-- `render/pdf.html`, `render/pdf.ts` - PDF renderer template
-- `render/index.html` - Test page with file upload
-- `js/src/index.ts` - Main API export
-- `js/src/cli.ts` - CLI interface
+- `render/*.html`, `render/*.ts` - Format-specific renderers
 - `js/src/renderer.ts` - Playwright browser automation
 - `js/src/detector.ts` - Format detection
-- `python/screenitshot/__init__.py` - Python API wrapper
-- `python/screenitshot/cli.py` - Python CLI wrapper
-- `docker/Dockerfile` - Production Docker image
-- `docker/Dockerfile.local` - Development Docker image
+- `python/screenitshot/` - Python wrapper
+- `docker/Dockerfile` - Docker image
 
 ### Testing Instructions
 
@@ -855,10 +808,11 @@ docker run -v $(pwd):/app screenitshot:local /app/sample.pdf /app/output-docker.
 5. **No progress reporting** - Silent during conversion
 6. **Templates not customizable yet** - Plugin system planned for Phase 3
 
-### Phase 2: Additional Formats (Planned)
+### Phase 2: Additional Formats (In Progress)
 
 - EPUB support (epub.js)
 - DOCX support (docx-preview) ✅
+- XLSX support (ExcelJS) ✅
 - Markdown support
 - HTML support
 
