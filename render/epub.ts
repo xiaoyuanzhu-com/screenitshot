@@ -165,8 +165,6 @@ async function renderEPUB(): Promise<RenderMetadata> {
         let maxRight = 0;
         let maxBottom = 0;
 
-        console.log('[EPUB] Scanning', allElements.length, 'elements');
-
         // Skip generic container elements (div, span, body, etc.) - focus on actual content
         const containerTags = new Set(['DIV', 'SPAN', 'SECTION', 'ARTICLE', 'MAIN', 'HEADER', 'FOOTER', 'NAV', 'ASIDE']);
 
@@ -175,23 +173,11 @@ async function renderEPUB(): Promise<RenderMetadata> {
           const tagName = el.tagName.toUpperCase();
           const isContainer = containerTags.has(tagName);
 
-          if (rect.width > 0 && rect.height > 0) {
-            console.log('[EPUB] Element:', tagName, 'isContainer:', isContainer, 'rect:', {
-              left: rect.left,
-              top: rect.top,
-              right: rect.right,
-              bottom: rect.bottom,
-              width: rect.width,
-              height: rect.height
-            });
-
-            // Skip container elements for bounds calculation
-            if (!isContainer) {
-              minLeft = Math.min(minLeft, rect.left);
-              minTop = Math.min(minTop, rect.top);
-              maxRight = Math.max(maxRight, rect.right);
-              maxBottom = Math.max(maxBottom, rect.bottom);
-            }
+          if (rect.width > 0 && rect.height > 0 && !isContainer) {
+            minLeft = Math.min(minLeft, rect.left);
+            minTop = Math.min(minTop, rect.top);
+            maxRight = Math.max(maxRight, rect.right);
+            maxBottom = Math.max(maxBottom, rect.bottom);
           }
         });
 
@@ -202,21 +188,15 @@ async function renderEPUB(): Promise<RenderMetadata> {
           maxBottom
         );
 
-        console.log('[EPUB] Bounds:', { minLeft, minTop, maxRight, maxBottom, scrollHeight });
-
         // Calculate actual content dimensions (crop to content bounds)
         if (minLeft !== Infinity) {
           contentWidth = Math.max(Math.ceil(maxRight - minLeft), 100);
           // Use scrollHeight if it's larger than measured maxBottom
           contentHeight = Math.max(Math.ceil(scrollHeight - minTop), 100);
 
-          console.log('[EPUB] Calculated size:', { contentWidth, contentHeight });
-
           // Store clip coordinates for Playwright
           const clipX = minLeft;
           const clipY = minTop;
-
-          console.log('[EPUB] Clip coordinates:', { clipX, clipY, contentWidth, contentHeight });
 
           // Return with clip info - let Playwright handle the clipping
           return {
