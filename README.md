@@ -1,14 +1,25 @@
 # ScreenItShot
 
-Convert various file formats to high-quality screenshots using browser-based rendering.
+Turn various types of documents into screenshots. Inspired by [MarkItDown](https://github.com/microsoft/markitdown).
 
 ## Features
 
-- Universal screenshot tool for PDFs, EPUBs, DOCX, XLSX, PPTX, and more
-- High-quality rendering using Chromium
-- Available as npm package, Python binding, and Docker image
-- Reproducible builds with pinned dependencies
-- Simple CLI and programmatic APIs
+- PDF, ePub, Word, Excel support
+- Browser based
+- JavaScript package and cli
+- Python package and cli
+- Docker image
+
+**Supported Formats**
+
+| File Extension | Library | Status |
+|----------------|---------|--------|
+| `.pdf` | [PDF.js](https://github.com/mozilla/pdf.js) | ✅ |
+| `.epub` | [epub.js](https://github.com/futurepress/epub.js) | ✅ |
+| `.docx` | [docxjs](https://github.com/VolodymyrBaydalka/docxjs) | ✅ |
+| `.xlsx` | [ExcelJS](https://github.com/exceljs/exceljs) | ✅ |
+| `.pptx` | | ❌ |
+
 
 ## Quick Start
 
@@ -65,16 +76,6 @@ npm install screenitshot
 ```bash
 pip install screenitshot
 ```
-
-## Supported Formats
-
-| File Extension | Library | Version | Status |
-|----------------|---------|---------|--------|
-| `.pdf` | [PDF.js](https://github.com/mozilla/pdf.js) | 4.0.379 | ✅ |
-| `.epub` | [epub.js](https://github.com/futurepress/epub.js) | 0.3.93 | ✅ |
-| `.docx` | [docx-preview](https://github.com/VolodymyrBaydalka/docxjs) | 0.3.7 | ✅ |
-| `.xlsx` | [ExcelJS](https://github.com/exceljs/exceljs) | 4.4.0 | ✅ |
-| `.pptx` | [pptx-preview](https://github.com/nickvdyck/pptx-preview) | 1.0.7 | ✅ |
 
 ## Documentation
 
