@@ -21,7 +21,7 @@ Inspired by [MarkItDown](https://github.com/microsoft/markitdown).
 | `.xlsx` | [ExcelJS](https://github.com/exceljs/exceljs) | ✅ |
 | `.pptx` | [pptx-preview](https://github.com/niconiahi/pptx-preview) | ✅ |
 | `.md` | [marked](https://github.com/markedjs/marked) | ✅ |
-| `.html` | [Chromium](https://www.chromium.org/chromium-projects/) | 📋 TODO |
+| `.html` | [Chromium](https://www.chromium.org/chromium-projects/) | ✅ |
 | `.csv` | [PapaParse](https://github.com/mholt/PapaParse) | 📋 TODO |
 | `.rtf` | [rtf.js](https://github.com/niconiahi/rtf.js) | 📋 TODO |
 | `.ipynb` | [marked](https://github.com/markedjs/marked) + [Shiki](https://github.com/shikijs/shiki) | 📋 TODO |

@@ -14,6 +14,8 @@ export async function detectFormat(filePath: string): Promise<FileFormat> {
     '.pptx': 'pptx',
     '.md': 'md',
     '.markdown': 'md',
+    '.html': 'html',
+    '.htm': 'html',
   };
 
   if (ext in extensionMap) {
