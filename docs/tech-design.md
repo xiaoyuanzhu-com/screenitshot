@@ -806,6 +806,20 @@ if (clipX !== undefined && clipY !== undefined) {
 - Works regardless of epub.js internal styling
 - Accurately captures actual content without whitespace
 
+#### 5. URL Format (Direct Navigation)
+**Problem**: URLs don't fit the standard template pattern - there's no file to inject.
+
+**Solution**: Special case in renderer - navigate directly to URL instead of loading a template:
+```typescript
+if (format === 'url') {
+  const url = (await readFile(inputPath)).toString('utf-8').trim();
+  await page.goto(url, { waitUntil: 'networkidle' });
+  await page.screenshot({ path: outputPath });
+}
+```
+
+The `.url` file simply contains the URL string. No template is used.
+
 ## Implementation Status
 
 ### Phase 1: PDF Support (MVP) ✅ COMPLETED
