@@ -313,6 +313,42 @@ When creating a new renderer (e.g., `epub.html`):
 5. **Test both modes** - Verify Playwright automation and manual upload work
 6. **Keep placeholders obvious** - Use ALL_CAPS naming like `FILE_BASE64_PLACEHOLDER`
 
+## Size and Pagination by Renderer
+
+This section documents how each renderer determines screenshot dimensions and handles the `page` parameter.
+
+**Page types:**
+- **Native**: Format has intrinsic pages/slides (PDF, PPTX, XLSX)
+- **Hybrid**: Native page selection + fixed width with content height (EPUB)
+- **Pseudo**: Portrait viewport (1080×1920), pseudo-paginated by height
+- **Scaled**: Intrinsic dimensions, scaled up to max-width if smaller
+- **Fixed**: Fixed viewport size (1920×1080)
+
+| Renderer | Type | Viewport | Dimensions | pageNumber Effect |
+|----------|------|----------|------------|-------------------|
+| pdf.ts | Native | — | Intrinsic (e.g., 612×792 pts × 2.0) | Selects page |
+| pptx.ts | Native | — | Fixed 960×540 | Selects slide |
+| xlsx.ts | Native | — | Table content size | Selects sheet |
+| epub.ts | Hybrid | 1080 width | 1080 × content height | Selects chapter |
+| docx.ts | Pseudo | 1080×1920 | 1080 × 1920 | Scrolls to segment |
+| html.ts | Pseudo | 1080×1920 | 1080 × 1920 | Scrolls to segment |
+| md.ts | Pseudo | 1080×1920 | 1080 × 1920 | Scrolls to segment |
+| rtf.ts | Pseudo | 1080×1920 | 1080 × 1920 | Scrolls to segment |
+| tex.ts | Pseudo | 1080×1920 | 1080 × 1920 | Scrolls to segment |
+| code.ts | Pseudo | 1080×1920 | 1080 × 1920 | Scrolls to segment |
+| csv.ts | Pseudo | 1080×1920 | 1080 × 1920 | Scrolls to segment |
+| ipynb.ts | Pseudo | 1080×1920 | 1080 × 1920 | Scrolls to segment |
+| mmd.ts | Scaled | — | Intrinsic SVG, scale to max-width 1920 | Ignored |
+| url.ts | Fixed | 1920×1080 | 1920 × 1080 | Scrolls to segment |
+| location.ts | Fixed | 1920×1080 | 1920 × 1080, honors zoom | Ignored |
+| geojson.ts | Fixed | 1920×1080 | 1920 × 1080, honors zoom | Ignored |
+| gpx.ts | Fixed | 1920×1080 | 1920 × 1080, honors zoom | Ignored |
+
+**Pseudo-pagination formula (for 1080×1920 portrait viewport):**
+- `pageCount = Math.ceil(totalHeight / 1920)`
+- `scrollY = (pageNumber - 1) * 1920`
+- `pageHeight = Math.min(1920, totalHeight - scrollY)`
+
 ## Technology Stack
 
 ### Core Dependencies
