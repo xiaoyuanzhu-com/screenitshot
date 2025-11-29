@@ -96,10 +96,10 @@ export async function detectFormat(filePath: string): Promise<FileFormat> {
     // Mermaid diagram extension
     '.mmd': 'mmd',
     '.mermaid': 'mmd',
-    // Location file extension
-    '.location': 'location',
-    '.loc': 'location',
-    '.geo': 'location',
+    // GeoJSON extension
+    '.geojson': 'geojson',
+    // GPX extension
+    '.gpx': 'gpx',
   };
 
   if (ext in extensionMap) {

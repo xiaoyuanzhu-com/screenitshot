@@ -5,10 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run build:pdf && npm run build:docx && npm run build:xlsx && npm run build:pptx && npm run build:epub && npm run build:md && npm run build:html && npm run build:csv && npm run build:rtf && npm run build:ipynb && npm run build:tex && npm run build:code && npm run build:url && npm run build:mmd && npm run build:location",
+    "build": "npm run build:pdf && npm run build:docx && npm run build:xlsx && npm run build:pptx && npm run build:epub && npm run build:md && npm run build:html && npm run build:csv && npm run build:rtf && npm run build:ipynb && npm run build:tex && npm run build:code && npm run build:url && npm run build:mmd && npm run build:geojson && npm run build:gpx",
     "build:url": "VITE_INPUT=url vite build",
     "build:mmd": "VITE_INPUT=mmd vite build",
-    "build:location": "VITE_INPUT=location vite build",
+    "build:geojson": "VITE_INPUT=geojson vite build",
+    "build:gpx": "VITE_INPUT=gpx vite build",
     "build:code": "VITE_INPUT=code vite build",
     "build:tex": "VITE_INPUT=tex vite build",
     "build:ipynb": "VITE_INPUT=ipynb vite build",
@@ -26,6 +27,7 @@
     "lint:fix": "eslint \"*.ts\" --fix"
   },
   "dependencies": {
+    "@tmcw/togeojson": "^7.1.2",
     "@types/papaparse": "^5.5.0",
     "docx-preview": "^0.3.7",
     "epubjs": "^0.3.93",
