@@ -86,8 +86,8 @@ async function renderPDF(): Promise<RenderMetadata> {
       showFileSelector();
       // Return dummy metadata for local testing
       return {
-        width: 1920,
-        height: 1080,
+        width: 1280,
+        height: 960,
         pageCount: 1,
         pageNumber: 1,
         scale: 1.0

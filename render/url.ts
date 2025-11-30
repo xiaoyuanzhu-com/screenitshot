@@ -66,8 +66,8 @@ async function renderURL(): Promise<RenderMetadata> {
       showUrlInput();
       // Return dummy metadata for local testing
       return {
-        width: 1920,
-        height: 1080,
+        width: 1280,
+        height: 960,
         pageCount: 1,
         pageNumber: 1,
         scale: 1.0
@@ -93,8 +93,8 @@ async function renderURL(): Promise<RenderMetadata> {
 
     // Return metadata
     return {
-      width: 1920,
-      height: 1080,
+      width: 1280,
+      height: 960,
       pageCount: 1,
       pageNumber: pageNumber,
       scale: 2.0

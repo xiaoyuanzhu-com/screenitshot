@@ -22,8 +22,8 @@ program
   .argument('<input>', 'Input file path')
   .argument('[output]', 'Output image path')
   .option('-f, --format <format>', 'Output image format (png, jpeg, webp)', 'png')
-  .option('-w, --width <width>', 'Viewport width', '1920')
-  .option('-h, --height <height>', 'Viewport height', '1080')
+  .option('-w, --width <width>', 'Viewport width', '1280')
+  .option('-h, --height <height>', 'Viewport height', '960')
   .option('-p, --page <page>', 'Page number for multi-page documents', '1')
   .action(async (input: string, output: string | undefined, options: any) => {
     try {

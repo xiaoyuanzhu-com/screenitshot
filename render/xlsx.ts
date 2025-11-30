@@ -243,8 +243,8 @@ async function renderXLSX(): Promise<RenderMetadata> {
     if (fileBase64 === FILE_BASE64_PLACEHOLDER) {
       showFileSelector();
       return {
-        width: 1920,
-        height: 1080,
+        width: 1280,
+        height: 960,
         pageCount: 1,
         pageNumber: 1,
         scale: 1.0

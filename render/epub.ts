@@ -113,7 +113,7 @@ async function renderEPUB(): Promise<RenderMetadata> {
 
     // Use scrolled-doc flow to render full chapter content
     const rendition = book.renderTo(container, {
-      width: 1080,
+      width: 960,
       spread: 'none',
       flow: 'scrolled-doc',
       allowScriptedContent: true
@@ -144,8 +144,8 @@ async function renderEPUB(): Promise<RenderMetadata> {
 
     // Measure actual content dimensions from the rendered iframe
     const iframe = container.querySelector('iframe') as HTMLIFrameElement;
-    let contentWidth = 1080;
-    let contentHeight = 1080;
+    let contentWidth = 960;
+    let contentHeight = 960;
 
     if (iframe && iframe.contentDocument) {
       const body = iframe.contentDocument.body;

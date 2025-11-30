@@ -78,8 +78,8 @@ async function render(): Promise<RenderMetadata> {
   }
 
   // Set map dimensions
-  const width = 1920;
-  const height = 1080;
+  const width = 1280;
+  const height = 960;
 
   // Initialize map with OpenStreetMap tiles
   const map = new maplibregl.Map({

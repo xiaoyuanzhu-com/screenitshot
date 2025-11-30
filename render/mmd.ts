@@ -54,8 +54,8 @@ async function render(): Promise<RenderMetadata> {
   let width = Math.ceil(rect.width) + 40; // Add padding
   let height = Math.ceil(rect.height) + 40;
 
-  // Scale to max-width 1920 if needed
-  const MAX_WIDTH = 1920;
+  // Scale to max-width 1280 if needed
+  const MAX_WIDTH = 1280;
   let scale = 1;
   if (width > MAX_WIDTH) {
     scale = MAX_WIDTH / width;

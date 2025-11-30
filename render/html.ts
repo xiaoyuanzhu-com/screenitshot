@@ -68,8 +68,8 @@ function showFileSelector() {
 }
 
 // Viewport constants for pseudo-pagination
-const VIEWPORT_WIDTH = 1080;
-const VIEWPORT_HEIGHT = 1920;
+const VIEWPORT_WIDTH = 960;
+const VIEWPORT_HEIGHT = 1280;
 
 // Main rendering function
 async function renderHTML(): Promise<RenderMetadata> {

@@ -38,8 +38,8 @@ declare global {
 let highlighter: Highlighter | null = null;
 
 // Viewport constants for pseudo-pagination
-const VIEWPORT_WIDTH = 1080;
-const VIEWPORT_HEIGHT = 1920;
+const VIEWPORT_WIDTH = 960;
+const VIEWPORT_HEIGHT = 1280;
 
 // Initialize Shiki highlighter
 async function initHighlighter(): Promise<Highlighter> {
