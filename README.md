@@ -9,9 +9,9 @@ Inspired by [MarkItDown](https://github.com/microsoft/markitdown).
 
 - PDF, Word, Excel and many more
 - Browser based render and screenshot
-- JavaScript package and cli
-- Python package and cli
-- Docker image
+- Retina quality
+- Auto landscape/portrait detection
+- Support JavaScript, Python and Docker
 
 **Supported Formats**
 
@@ -59,8 +59,8 @@ import { screenshot } from 'screenitshot';
 await screenshot('document.pdf', {
   output: 'output.png',
   format: 'png',
-  width: 1920,
-  height: 1080,
+  width: 1280,
+  height: 960,
   page: 1
 });
 ```
@@ -73,8 +73,8 @@ screenshot(
     'document.pdf',
     output='output.png',
     format='png',
-    width=1920,
-    height=1080,
+    width=1280,
+    height=960,
     page=1
 )
 ```
