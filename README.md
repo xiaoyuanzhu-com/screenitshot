@@ -1,5 +1,7 @@
 # ScreenItShot
 
+[![npm version](https://img.shields.io/npm/v/screenitshot)](https://www.npmjs.com/package/screenitshot)
+
 Convert many document formats into screenshot previews.  
 Inspired by [MarkItDown](https://github.com/microsoft/markitdown).
 
