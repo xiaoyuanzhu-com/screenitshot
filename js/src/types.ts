@@ -11,6 +11,7 @@ export interface ScreenshotResult {
   format: string;
   width: number;
   height: number;
+  renderer: string;
 }
 
 export interface RenderMetadata {

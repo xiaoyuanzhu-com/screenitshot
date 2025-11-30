@@ -113,6 +113,7 @@ export class Renderer {
           format: imageFormat,
           width: webWidth * deviceScaleFactor,
           height: webHeight * deviceScaleFactor,
+          renderer: format,
         };
       }
 
@@ -196,6 +197,7 @@ export class Renderer {
         format: imageFormat,
         width: actualWidth,
         height: actualHeight,
+        renderer: format,
       };
     } catch (error) {
       await browser.close();

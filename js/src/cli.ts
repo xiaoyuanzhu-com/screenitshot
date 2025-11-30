@@ -38,6 +38,7 @@ program
       });
 
       console.log(`✓ Screenshot saved to ${result.path}`);
+      console.log(`  Renderer: ${result.renderer}`);
       console.log(`  Format: ${result.format}`);
       console.log(`  Size: ${result.width}x${result.height}`);
     } catch (error) {
