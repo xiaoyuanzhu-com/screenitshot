@@ -5,7 +5,7 @@ Inspired by [MarkItDown](https://github.com/microsoft/markitdown).
 
 ## Features
 
-- PDF, Word, Excel support and many more
+- PDF, Word, Excel and many more
 - Browser based render and screenshot
 - JavaScript package and cli
 - Python package and cli

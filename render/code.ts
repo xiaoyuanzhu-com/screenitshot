@@ -116,16 +116,15 @@ function getLanguageFromFilename(filename: string): BundledLanguage {
   if (basename === 'dockerfile' || basename.startsWith('dockerfile.')) return 'dockerfile';
   if (basename === 'makefile' || basename === 'gnumakefile') return 'makefile';
   if (basename === 'cmakelists.txt') return 'cmake';
-  if (basename === '.gitignore' || basename === '.dockerignore') return 'gitignore';
+  if (basename === '.gitignore' || basename === '.dockerignore') return 'shellscript';
 
-  return extensionToLanguage[ext] || 'text';
+  return extensionToLanguage[ext] || 'plaintext';
 }
 
 // Get all languages we need to load
 function getLanguagesToLoad(): BundledLanguage[] {
   const languages = new Set<BundledLanguage>(Object.values(extensionToLanguage));
-  languages.add('text');
-  languages.add('gitignore');
+  languages.add('shellscript');
   return Array.from(languages);
 }
 
