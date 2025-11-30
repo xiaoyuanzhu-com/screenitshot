@@ -37,6 +37,10 @@ declare global {
 
 let highlighter: Highlighter | null = null;
 
+// Viewport constants for pseudo-pagination
+const VIEWPORT_WIDTH = 1080;
+const VIEWPORT_HEIGHT = 1920;
+
 // Initialize Shiki highlighter
 async function initHighlighter(): Promise<Highlighter> {
   if (!highlighter) {
@@ -307,13 +311,16 @@ async function renderNotebook(): Promise<RenderMetadata> {
       showFileSelector();
       // Return dummy metadata for local testing
       return {
-        width: 1920,
-        height: 1080,
+        width: VIEWPORT_WIDTH,
+        height: VIEWPORT_HEIGHT,
         pageCount: 1,
         pageNumber: 1,
         scale: 1.0
       };
     }
+
+    // Set container to fixed width for consistent rendering
+    container.style.width = `${VIEWPORT_WIDTH}px`;
 
     // Inject styles
     injectStyles();
@@ -397,23 +404,34 @@ async function renderNotebook(): Promise<RenderMetadata> {
     // Wait for rendering to complete
     await new Promise(resolve => setTimeout(resolve, 100));
 
-    // Measure rendered content dimensions
-    const scale = 2.0;
-    const rect = container.getBoundingClientRect();
+    // Measure total content height for pseudo-pagination
+    const totalHeight = container.scrollHeight;
 
-    // Include padding
-    const width = Math.ceil(Math.max(rect.width + 40, 400) * scale);
-    const height = Math.ceil((rect.height + 40) * scale);
+    // Calculate page count based on viewport height
+    const pageCount = Math.max(1, Math.ceil(totalHeight / VIEWPORT_HEIGHT));
 
-    console.log('Jupyter Notebook rendered successfully');
+    // Validate requested page
+    const targetPage = Math.max(1, Math.min(pageNumber, pageCount));
+
+    // Calculate scroll offset for this page
+    const scrollY = (targetPage - 1) * VIEWPORT_HEIGHT;
+
+    // Calculate height for this page (may be less for last page)
+    const remainingHeight = totalHeight - scrollY;
+    const pageHeight = Math.min(VIEWPORT_HEIGHT, remainingHeight);
+
+    // Scroll to the target page position
+    window.scrollTo(0, scrollY);
+
+    console.log(`Jupyter Notebook rendered successfully (page ${targetPage}/${pageCount})`);
 
     // Return metadata for Playwright to resize viewport
     return {
-      width,
-      height,
-      pageCount: 1,
-      pageNumber: pageNumber,
-      scale
+      width: VIEWPORT_WIDTH,
+      height: pageHeight,
+      pageCount,
+      pageNumber: targetPage,
+      scale: 2.0
     };
   } catch (error) {
     console.error('Error rendering Jupyter Notebook:', error);

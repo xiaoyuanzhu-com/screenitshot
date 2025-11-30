@@ -51,15 +51,24 @@ async function render(): Promise<RenderMetadata> {
 
   // Get the actual dimensions
   const rect = svg.getBoundingClientRect();
-  const width = Math.ceil(rect.width) + 40; // Add padding
-  const height = Math.ceil(rect.height) + 40;
+  let width = Math.ceil(rect.width) + 40; // Add padding
+  let height = Math.ceil(rect.height) + 40;
+
+  // Scale to max-width 1920 if needed
+  const MAX_WIDTH = 1920;
+  let scale = 1;
+  if (width > MAX_WIDTH) {
+    scale = MAX_WIDTH / width;
+    width = MAX_WIDTH;
+    height = Math.ceil(height * scale);
+  }
 
   return {
     width,
     height,
     pageCount: 1,
     pageNumber: 1,
-    scale: 1,
+    scale,
   };
 }
 

@@ -69,6 +69,10 @@ function showFileSelector() {
   });
 }
 
+// Viewport constants for pseudo-pagination
+const VIEWPORT_WIDTH = 1080;
+const VIEWPORT_HEIGHT = 1920;
+
 // Render DOCX using docx-preview
 async function renderDOCX(): Promise<RenderMetadata> {
   try {
@@ -82,8 +86,8 @@ async function renderDOCX(): Promise<RenderMetadata> {
       showFileSelector();
       // Return dummy metadata for local testing
       return {
-        width: 1920,
-        height: 1080,
+        width: VIEWPORT_WIDTH,
+        height: VIEWPORT_HEIGHT,
         pageCount: 1,
         pageNumber: 1,
         scale: 1.0
@@ -98,15 +102,18 @@ async function renderDOCX(): Promise<RenderMetadata> {
     }
     const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
 
+    // Set container to fixed width for consistent rendering
+    container.style.width = `${VIEWPORT_WIDTH}px`;
+
     // Render DOCX using docx-preview
     await renderAsync(blob, container, undefined, {
       className: 'docx',
       inWrapper: true,
-      ignoreWidth: false,
-      ignoreHeight: false,
+      ignoreWidth: true,  // Ignore DOCX page width, use our fixed width
+      ignoreHeight: true, // Ignore DOCX page height, let content flow
       ignoreFonts: false,
-      breakPages: true,
-      ignoreLastRenderedPageBreak: false,
+      breakPages: false,  // Don't break pages, render as continuous
+      ignoreLastRenderedPageBreak: true,
       experimental: false,
       trimXmlDeclaration: true,
       useBase64URL: true,
@@ -125,65 +132,34 @@ async function renderDOCX(): Promise<RenderMetadata> {
       throw new Error('DOCX rendering failed - no wrapper element found');
     }
 
-    // Find all rendered sections (document sections, not page breaks)
-    const sections = wrapper.querySelectorAll('section.docx');
+    // Measure total content height for pseudo-pagination
+    const totalHeight = wrapper.scrollHeight;
 
-    // Use the first section as the main content (contains body)
-    // docx-preview renders the full document in sections, page breaks are visual only
-    let visiblePage: HTMLElement;
-    if (sections.length > 0) {
-      visiblePage = sections[0] as HTMLElement;
-      // Hide other sections (headers/footers rendered separately)
-      sections.forEach((section, index) => {
-        if (index > 0) {
-          (section as HTMLElement).style.display = 'none';
-        }
-      });
-    } else {
-      visiblePage = wrapper;
-    }
+    // Calculate page count based on viewport height
+    const pageCount = Math.max(1, Math.ceil(totalHeight / VIEWPORT_HEIGHT));
 
-    // Use 2x scale for high quality output
-    const scale = 2.0;
-
-    // Get page dimensions from inline styles (set by docx-preview from DOCX page settings)
-    const inlineWidth = visiblePage.style.width;
-    const inlineMinHeight = visiblePage.style.minHeight;
-
-    let width: number;
-    let height: number;
-
-    // Parse width from inline style (in pt)
-    if (inlineWidth) {
-      width = parseFloat(inlineWidth);
-    } else {
-      width = visiblePage.offsetWidth;
-    }
-
-    // For height, use minHeight (page height from DOCX) or calculate A4 ratio
-    if (inlineMinHeight) {
-      height = parseFloat(inlineMinHeight);
-    } else {
-      // A4 ratio: height = width * (297/210)
-      height = width * (297 / 210);
-    }
-
-    width = Math.ceil(width * scale);
-    height = Math.ceil(height * scale);
-
-    // Calculate approximate page count based on content height vs page height
-    const contentHeight = visiblePage.scrollHeight;
-    const singlePageHeight = parseFloat(inlineMinHeight) || (width / scale) * (297 / 210);
-    const pageCount = Math.ceil(contentHeight / singlePageHeight);
+    // Validate requested page
     const targetPage = Math.max(1, Math.min(pageNumber, pageCount));
+
+    // Calculate scroll offset for this page
+    const scrollY = (targetPage - 1) * VIEWPORT_HEIGHT;
+
+    // Calculate height for this page (may be less for last page)
+    const remainingHeight = totalHeight - scrollY;
+    const pageHeight = Math.min(VIEWPORT_HEIGHT, remainingHeight);
+
+    // Scroll to the target page position
+    window.scrollTo(0, scrollY);
+
+    console.log(`DOCX rendered successfully (page ${targetPage}/${pageCount})`);
 
     // Return metadata for Playwright to resize viewport
     return {
-      width,
-      height,
+      width: VIEWPORT_WIDTH,
+      height: pageHeight,
       pageCount,
       pageNumber: targetPage,
-      scale
+      scale: 2.0
     };
   } catch (error) {
     console.error('Error rendering DOCX:', error);

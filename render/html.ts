@@ -67,6 +67,10 @@ function showFileSelector() {
   });
 }
 
+// Viewport constants for pseudo-pagination
+const VIEWPORT_WIDTH = 1080;
+const VIEWPORT_HEIGHT = 1920;
+
 // Main rendering function
 async function renderHTML(): Promise<RenderMetadata> {
   try {
@@ -80,8 +84,8 @@ async function renderHTML(): Promise<RenderMetadata> {
       showFileSelector();
       // Return dummy metadata for local testing
       return {
-        width: 1920,
-        height: 1080,
+        width: VIEWPORT_WIDTH,
+        height: VIEWPORT_HEIGHT,
         pageCount: 1,
         pageNumber: 1,
         scale: 1.0
@@ -118,12 +122,15 @@ async function renderHTML(): Promise<RenderMetadata> {
       }
     });
 
+    // Set container to fixed width for consistent rendering
+    container.style.width = `${VIEWPORT_WIDTH}px`;
+
     // Set body content
     container.innerHTML = doc.body.innerHTML;
 
     // Copy body styles if any
     if (doc.body.style.cssText) {
-      container.style.cssText = doc.body.style.cssText;
+      container.style.cssText += doc.body.style.cssText;
     }
 
     // Wait for any images to load
@@ -139,23 +146,34 @@ async function renderHTML(): Promise<RenderMetadata> {
     // Wait for rendering to complete
     await new Promise(resolve => setTimeout(resolve, 100));
 
-    // Measure rendered content dimensions
-    const scale = 2.0;
-    const rect = container.getBoundingClientRect();
+    // Measure total content height for pseudo-pagination
+    const totalHeight = container.scrollHeight;
 
-    // Use reasonable minimum width
-    const width = Math.ceil(Math.max(rect.width, 800) * scale);
-    const height = Math.ceil(Math.max(rect.height, 100) * scale);
+    // Calculate page count based on viewport height
+    const pageCount = Math.max(1, Math.ceil(totalHeight / VIEWPORT_HEIGHT));
 
-    console.log('HTML rendered successfully');
+    // Validate requested page
+    const targetPage = Math.max(1, Math.min(pageNumber, pageCount));
+
+    // Calculate scroll offset for this page
+    const scrollY = (targetPage - 1) * VIEWPORT_HEIGHT;
+
+    // Calculate height for this page (may be less for last page)
+    const remainingHeight = totalHeight - scrollY;
+    const pageHeight = Math.min(VIEWPORT_HEIGHT, remainingHeight);
+
+    // Scroll to the target page position
+    window.scrollTo(0, scrollY);
+
+    console.log(`HTML rendered successfully (page ${targetPage}/${pageCount})`);
 
     // Return metadata for Playwright to resize viewport
     return {
-      width,
-      height,
-      pageCount: 1,
-      pageNumber: pageNumber,
-      scale
+      width: VIEWPORT_WIDTH,
+      height: pageHeight,
+      pageCount,
+      pageNumber: targetPage,
+      scale: 2.0
     };
   } catch (error) {
     console.error('Error rendering HTML:', error);

@@ -326,7 +326,7 @@ This section documents how each renderer determines screenshot dimensions and ha
 
 | Renderer | Type | Viewport | Dimensions | pageNumber Effect |
 |----------|------|----------|------------|-------------------|
-| pdf.ts | Native | — | Intrinsic (e.g., 612×792 pts × 2.0) | Selects page |
+| pdf.ts | Native | — | Intrinsic page size | Selects page |
 | pptx.ts | Native | — | Fixed 960×540 | Selects slide |
 | xlsx.ts | Native | — | Table content size | Selects sheet |
 | epub.ts | Hybrid | 1080 width | 1080 × content height | Selects chapter |
