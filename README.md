@@ -1,5 +1,6 @@
 # ScreenItShot
 
+[![PyPI version](https://img.shields.io/pypi/v/screenitshot)](https://pypi.org/project/screenitshot/)
 [![npm version](https://img.shields.io/npm/v/screenitshot)](https://www.npmjs.com/package/screenitshot)
 
 Convert many document formats into screenshot previews.  
