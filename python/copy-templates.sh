@@ -8,7 +8,8 @@ TEMPLATES_DIR="$SCRIPT_DIR/screenitshot/templates"
 
 mkdir -p "$TEMPLATES_DIR"
 
-for format in pdf docx xlsx pptx epub; do
+# All supported formats (matching JS binding)
+for format in pdf epub docx xlsx pptx md html csv rtf ipynb tex code url mmd geojson gpx; do
     if [ -f "$RENDER_DIST/$format.html" ]; then
         cp "$RENDER_DIST/$format.html" "$TEMPLATES_DIR/"
         echo "Copied $format.html"

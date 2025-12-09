@@ -1,5 +1,6 @@
 """Command-line interface for screenitshot"""
 
+import os
 import sys
 import argparse
 from . import screenshot, ScreenitshotError, __version__
@@ -18,6 +19,18 @@ def main():
         choices=["png", "jpeg", "webp"],
         default="png",
         help="Output image format (default: png)",
+    )
+    parser.add_argument(
+        "-w", "--width",
+        type=int,
+        default=1280,
+        help="Viewport width (default: 1280)",
+    )
+    parser.add_argument(
+        "-H", "--height",
+        type=int,
+        default=960,
+        help="Viewport height (default: 960)",
     )
     parser.add_argument(
         "-p", "--page",
@@ -39,17 +52,29 @@ def main():
             args.input,
             output=args.output,
             format=args.format,
+            width=args.width,
+            height=args.height,
             page=args.page,
         )
-        print(f"Saved to {result.path}")
+        print(f"✓ Screenshot saved to {result.path}")
+        print(f"  Renderer: {result.renderer}")
         print(f"  Format: {result.format}")
         print(f"  Size: {result.width}x{result.height}")
     except ScreenitshotError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
+    except FileNotFoundError as e:
+        print(f"Error: Input file not found: {args.input}", file=sys.stderr)
+        sys.exit(1)
     except KeyboardInterrupt:
         print("\nAborted", file=sys.stderr)
         sys.exit(130)
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        if os.environ.get("DEBUG"):
+            import traceback
+            traceback.print_exc()
+        sys.exit(1)
 
 
 if __name__ == "__main__":
