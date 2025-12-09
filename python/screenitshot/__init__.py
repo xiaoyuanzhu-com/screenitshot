@@ -7,7 +7,7 @@ Self-contained Python package using Playwright for browser-based rendering.
 import base64
 import asyncio
 from pathlib import Path
-from typing import Optional, Literal
+from typing import Optional, Literal, Union
 from dataclasses import dataclass
 
 from playwright.async_api import async_playwright
@@ -21,6 +21,50 @@ FileFormat = Literal[
     "ipynb", "tex", "code", "url", "mmd", "geojson", "gpx", "unknown"
 ]
 
+# Mapping from MIME types to FileFormat
+MIME_TO_FORMAT: dict[str, FileFormat] = {
+    "application/pdf": "pdf",
+    "application/epub+zip": "epub",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation": "pptx",
+    "text/markdown": "md",
+    "text/html": "html",
+    "text/csv": "csv",
+    "application/rtf": "rtf",
+    "text/rtf": "rtf",
+    "application/x-ipynb+json": "ipynb",
+    "application/x-tex": "tex",
+    "text/x-tex": "tex",
+    "application/geo+json": "geojson",
+    "application/gpx+xml": "gpx",
+}
+
+# Mapping from slug names to FileFormat (for convenience)
+SLUG_TO_FORMAT: dict[str, FileFormat] = {
+    "pdf": "pdf",
+    "epub": "epub",
+    "docx": "docx",
+    "xlsx": "xlsx",
+    "pptx": "pptx",
+    "md": "md",
+    "markdown": "md",
+    "html": "html",
+    "htm": "html",
+    "csv": "csv",
+    "rtf": "rtf",
+    "ipynb": "ipynb",
+    "jupyter": "ipynb",
+    "tex": "tex",
+    "latex": "tex",
+    "code": "code",
+    "url": "url",
+    "mmd": "mmd",
+    "mermaid": "mmd",
+    "geojson": "geojson",
+    "gpx": "gpx",
+}
+
 # Template directory - use render/dist in dev, bundled templates in installed package
 _DEV_TEMPLATES_DIR = Path(__file__).parent.parent.parent / "render" / "dist"
 _INSTALLED_TEMPLATES_DIR = Path(__file__).parent / "templates"
@@ -32,7 +76,7 @@ TEMPLATES_DIR = _DEV_TEMPLATES_DIR if _DEV_TEMPLATES_DIR.exists() else _INSTALLE
 @dataclass
 class ScreenshotResult:
     """Result of a screenshot operation"""
-    path: str
+    data: bytes
     format: str
     width: int
     height: int
@@ -42,6 +86,29 @@ class ScreenshotResult:
 class ScreenitshotError(Exception):
     """Base exception for screenitshot errors"""
     pass
+
+
+def resolve_format(format_str: str) -> FileFormat:
+    """Resolve a format string (MIME type or slug) to a FileFormat.
+
+    Args:
+        format_str: Either a MIME type (e.g., 'application/pdf') or slug (e.g., 'pdf')
+
+    Returns:
+        The resolved FileFormat
+
+    Raises:
+        ScreenitshotError: If format is not recognized
+    """
+    # Try slug first (more common)
+    if format_str.lower() in SLUG_TO_FORMAT:
+        return SLUG_TO_FORMAT[format_str.lower()]
+
+    # Try MIME type
+    if format_str in MIME_TO_FORMAT:
+        return MIME_TO_FORMAT[format_str]
+
+    raise ScreenitshotError(f"Unknown format: {format_str}. Use a slug (e.g., 'pdf') or MIME type (e.g., 'application/pdf')")
 
 
 def detect_format(file_path: str) -> FileFormat:
@@ -178,41 +245,35 @@ def get_template_path(format: FileFormat) -> Path:
 
 
 async def render_async(
-    input_file: str,
-    output: Optional[str] = None,
+    input: Union[bytes, str],
+    input_format: str,
+    *,
     format: ImageFormat = "png",
     width: Optional[int] = None,
     height: Optional[int] = None,
     page: int = 1,
+    file_name: Optional[str] = None,
 ) -> ScreenshotResult:
     """
     Async implementation of screenshot rendering.
 
     Args:
-        input_file: Path to the input file
-        output: Output image path (optional, defaults to input with new extension)
+        input: Input data - bytes for documents, or URL string for 'url' format
+        input_format: Input format as slug (e.g., 'pdf') or MIME type (e.g., 'application/pdf')
         format: Output image format ('png', 'jpeg', 'webp')
         width: Viewport width (optional, defaults to 800 or 1280 for URLs)
         height: Viewport height (optional, defaults to 600 or 800 for URLs)
         page: Page number for multi-page documents
+        file_name: Optional filename hint for code format language detection
 
     Returns:
-        ScreenshotResult with path and dimensions
+        ScreenshotResult with image data and dimensions
 
     Raises:
         ScreenitshotError: If conversion fails
     """
-    input_path = Path(input_file)
-    if not input_path.exists():
-        raise ScreenitshotError(f"Input file not found: {input_file}")
-
-    # Detect format
-    file_format = detect_format(input_file)
-    if file_format == "unknown":
-        raise ScreenitshotError(f"Unsupported file format: {input_file}")
-
-    # Determine output path
-    output_path = output or str(input_path.with_suffix(f".{format}"))
+    # Resolve format string to FileFormat
+    file_format = resolve_format(input_format)
 
     # Use small initial viewport - content will determine final size
     initial_width = width or 800
@@ -233,9 +294,11 @@ async def render_async(
 
             # Special handling for URL format - navigate directly to the URL
             if file_format == "url":
-                # Read URL from file (file contains just the URL string)
-                with open(input_file, "r") as f:
-                    url = f.read().strip()
+                # Input should be a URL string
+                if isinstance(input, bytes):
+                    url = input.decode("utf-8").strip()
+                else:
+                    url = input.strip()
 
                 # Set a reasonable viewport for webpage screenshots
                 web_width = width or 1280
@@ -245,9 +308,8 @@ async def render_async(
                 # Navigate to URL and wait for network idle
                 await page_obj.goto(url, wait_until="networkidle")
 
-                # Take screenshot
-                await page_obj.screenshot(
-                    path=output_path,
+                # Take screenshot to buffer
+                screenshot_data = await page_obj.screenshot(
                     type=format if format != "webp" else "png",
                     full_page=False,
                 )
@@ -255,7 +317,7 @@ async def render_async(
                 await browser.close()
 
                 return ScreenshotResult(
-                    path=output_path,
+                    data=screenshot_data,
                     format=format,
                     width=web_width * device_scale_factor,
                     height=web_height * device_scale_factor,
@@ -265,18 +327,22 @@ async def render_async(
             # Get template
             template_path = get_template_path(file_format)
 
-            # Read and encode file as base64
-            with open(input_file, "rb") as f:
-                file_base64 = base64.b64encode(f.read()).decode("ascii")
+            # Encode input as base64
+            if isinstance(input, str):
+                # For non-URL formats, string input is treated as text content
+                input_bytes = input.encode("utf-8")
+            else:
+                input_bytes = input
+            file_base64 = base64.b64encode(input_bytes).decode("ascii")
 
-            # Get filename for code format language detection
-            file_name = input_path.name
+            # Use provided filename or default
+            fname = file_name or ""
 
             # Inject data before loading template
             await page_obj.add_init_script(f"""
                 globalThis.fileBase64 = {repr(file_base64)};
                 globalThis.pageNumber = {page};
-                globalThis.fileName = {repr(file_name)};
+                globalThis.fileName = {repr(fname)};
             """)
 
             # Load template
@@ -310,8 +376,7 @@ async def render_async(
                 await page_obj.wait_for_timeout(100)
 
                 # Use clip to capture just the content area
-                await page_obj.screenshot(
-                    path=output_path,
+                screenshot_data = await page_obj.screenshot(
                     type=format if format != "webp" else "png",
                     clip={
                         "x": clip_x,
@@ -331,8 +396,7 @@ async def render_async(
                 await page_obj.wait_for_timeout(100)
 
                 # Take screenshot at exact rendered size
-                await page_obj.screenshot(
-                    path=output_path,
+                screenshot_data = await page_obj.screenshot(
                     type=format if format != "webp" else "png",
                     full_page=False,
                 )
@@ -344,7 +408,7 @@ async def render_async(
             actual_height = metadata["height"] * device_scale_factor
 
             return ScreenshotResult(
-                path=output_path,
+                data=screenshot_data,
                 format=format,
                 width=actual_width,
                 height=actual_height,
@@ -357,34 +421,37 @@ async def render_async(
 
 
 def screenshot(
-    input_file: str,
-    output: Optional[str] = None,
+    input: Union[bytes, str],
+    input_format: str,
+    *,
     format: ImageFormat = "png",
     width: Optional[int] = None,
     height: Optional[int] = None,
     page: int = 1,
+    file_name: Optional[str] = None,
 ) -> ScreenshotResult:
     """
-    Convert a file to a screenshot image.
+    Convert input data to a screenshot image.
 
     Args:
-        input_file: Path to the input file
-        output: Output image path (optional, defaults to input with new extension)
+        input: Input data - bytes for documents, or URL string for 'url' format
+        input_format: Input format as slug (e.g., 'pdf') or MIME type (e.g., 'application/pdf')
         format: Output image format ('png', 'jpeg', 'webp')
         width: Viewport width (optional, defaults to 800 or 1280 for URLs)
         height: Viewport height (optional, defaults to 600 or 800 for URLs)
         page: Page number for multi-page documents
+        file_name: Optional filename hint for code format language detection
 
     Returns:
-        ScreenshotResult with path and dimensions
+        ScreenshotResult with image data and dimensions
 
     Raises:
         ScreenitshotError: If conversion fails
     """
-    return asyncio.run(render_async(input_file, output, format, width, height, page))
+    return asyncio.run(render_async(input, input_format, format=format, width=width, height=height, page=page, file_name=file_name))
 
 
 # Convenience function for async usage
 render = render_async
 
-__all__ = ["screenshot", "render", "ScreenshotResult", "ScreenitshotError", "ImageFormat", "FileFormat"]
+__all__ = ["screenshot", "render", "ScreenshotResult", "ScreenitshotError", "ImageFormat", "FileFormat", "resolve_format", "detect_format"]

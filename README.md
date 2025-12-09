@@ -40,53 +40,24 @@ Inspired by [MarkItDown](https://github.com/microsoft/markitdown).
 ### CLI Usage
 
 ```bash
-# With npx
-npx screenitshot document.pdf output.png
-
-# With uvx
-uvx screenitshot document.pdf output.png
-
-# With docker
-docker run -v $(pwd):/app screenitshot/screenitshot /app/document.pdf /app/output.png
+npx screenitshot document.pdf
+# outputs document.png in the same folder
 ```
 
 ### Package Usage
 
-**JavaScript/TypeScript:**
-```javascript
-import { screenshot } from 'screenitshot';
-
-await screenshot('document.pdf', {
-  output: 'output.png',
-  format: 'png',
-  width: 1280,
-  height: 960,
-  page: 1
-});
-```
-
-**Python:**
 ```python
 from screenitshot import screenshot
 
-screenshot(
-    'document.pdf',
-    output='output.png',
-    format='png',
-    width=1280,
-    height=960,
-    page=1
-)
+with open('document.pdf', 'rb') as f:
+    result = screenshot(f.read(), 'pdf')
+
+with open('output.png', 'wb') as f:
+    f.write(result.data)
 ```
 
 ### Installation
 
-**JavaScript**
-```bash
-npm install screenitshot
-```
-
-**Python**
 ```bash
 pip install screenitshot
 ```

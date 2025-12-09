@@ -1,6 +1,5 @@
 import { chromium, type Page } from 'playwright';
-import { readFile } from 'fs/promises';
-import { resolve, dirname, basename } from 'path';
+import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import type { FileFormat, ScreenshotOptions, ScreenshotResult } from './types.js';
 
@@ -52,24 +51,22 @@ export class Renderer {
   }
 
   async render(
-    inputPath: string,
+    input: Buffer | string,
     format: FileFormat,
     options: ScreenshotOptions = {}
   ): Promise<ScreenshotResult> {
     const {
-      output,
       format: imageFormat = 'png',
       width,
       height,
       page: pageNumber = 1,
+      fileName = '',
     } = options;
 
     // Use small initial viewport - content will determine final size
     // For formats like XLSX, large viewport causes table to expand to fill it
     const initialWidth = width || 800;
     const initialHeight = height || 600;
-
-    const outputPath = output || inputPath.replace(/\.[^.]+$/, `.${imageFormat}`);
 
     // Launch browser
     const browser = await chromium.launch({
@@ -87,9 +84,10 @@ export class Renderer {
 
       // Special handling for URL format - navigate directly to the URL
       if (format === 'url') {
-        // Read URL from file (file contains just the URL string)
-        const fileData = await readFile(inputPath);
-        const url = fileData.toString('utf-8').trim();
+        // Input should be URL string (or buffer containing URL)
+        const url = Buffer.isBuffer(input)
+          ? input.toString('utf-8').trim()
+          : input.trim();
 
         // Set a reasonable viewport for webpage screenshots
         const webWidth = width || 1280;
@@ -99,9 +97,8 @@ export class Renderer {
         // Navigate to URL and wait for network idle
         await page.goto(url, { waitUntil: 'networkidle' });
 
-        // Take screenshot
-        await page.screenshot({
-          path: outputPath,
+        // Take screenshot to buffer
+        const screenshotData = await page.screenshot({
           type: imageFormat as 'png' | 'jpeg',
           fullPage: false,
         });
@@ -109,7 +106,7 @@ export class Renderer {
         await browser.close();
 
         return {
-          path: outputPath,
+          data: screenshotData,
           format: imageFormat,
           width: webWidth * deviceScaleFactor,
           height: webHeight * deviceScaleFactor,
@@ -117,12 +114,16 @@ export class Renderer {
         };
       }
 
-      // Read and encode file as base64
-      const fileData = await readFile(inputPath);
-      const fileBase64 = fileData.toString('base64');
+      // Encode input as base64
+      let fileBase64: string;
+      if (Buffer.isBuffer(input)) {
+        fileBase64 = input.toString('base64');
+      } else {
+        // String input for non-URL formats is treated as text content
+        fileBase64 = Buffer.from(input, 'utf-8').toString('base64');
+      }
 
-      // Inject data before loading template (include filename for code format)
-      const fileName = basename(inputPath);
+      // Inject data before loading template
       await this.injectDataIntoPage(page, fileBase64, pageNumber, fileName);
 
       // Load template
@@ -145,6 +146,8 @@ export class Renderer {
       const clipX = (metadata as any).clipX;
       const clipY = (metadata as any).clipY;
 
+      let screenshotData: Buffer;
+
       if (clipX !== undefined && clipY !== undefined) {
         // Resize viewport to ensure clip area is fully visible
         const requiredWidth = clipX + metadata.width;
@@ -158,8 +161,7 @@ export class Renderer {
         await page.waitForTimeout(100);
 
         // Use clip to capture just the content area
-        await page.screenshot({
-          path: outputPath,
+        screenshotData = await page.screenshot({
           type: imageFormat as 'png' | 'jpeg',
           clip: {
             x: clipX,
@@ -179,8 +181,7 @@ export class Renderer {
         await page.waitForTimeout(100);
 
         // Take screenshot at exact rendered size
-        await page.screenshot({
-          path: outputPath,
+        screenshotData = await page.screenshot({
           type: imageFormat as 'png' | 'jpeg',
           fullPage: false,
         });
@@ -193,7 +194,7 @@ export class Renderer {
       const actualHeight = metadata.height * deviceScaleFactor;
 
       return {
-        path: outputPath,
+        data: screenshotData,
         format: imageFormat,
         width: actualWidth,
         height: actualHeight,
