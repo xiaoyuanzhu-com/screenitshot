@@ -41,7 +41,7 @@ Inspired by [MarkItDown](https://github.com/microsoft/markitdown).
 ### CLI Usage
 
 ```bash
-npx screenitshot document.pdf
+uvx screenitshot document.pdf
 # outputs document.png in the same folder
 ```
 
