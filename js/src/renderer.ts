@@ -44,9 +44,9 @@ export class Renderer {
     // Inject data into page globals before template loads
     await page.addInitScript(({ fileBase64: fb64, pageNum, fName }: { fileBase64: string; pageNum: number; fName: string }) => {
       // Override the placeholder values
-      (globalThis as any).fileBase64 = fb64;
-      (globalThis as any).pageNumber = pageNum;
-      (globalThis as any).fileName = fName;
+      (globalThis as unknown as Record<string, unknown>).fileBase64 = fb64;
+      (globalThis as unknown as Record<string, unknown>).pageNumber = pageNum;
+      (globalThis as unknown as Record<string, unknown>).fileName = fName;
     }, { fileBase64, pageNum: pageNumber, fName: fileName });
   }
 
@@ -131,8 +131,14 @@ export class Renderer {
       await page.goto(`file://${templatePath}`);
 
       // Wait for render complete and get metadata
+      interface PageMetadata {
+        width: number;
+        height: number;
+        clipX?: number;
+        clipY?: number;
+      }
       const metadata = await page.evaluate(async () => {
-        const renderComplete = (globalThis as any).renderComplete;
+        const renderComplete = (globalThis as unknown as Record<string, unknown>).renderComplete as Promise<PageMetadata> | undefined;
 
         if (!renderComplete) {
           throw new Error('window.renderComplete not found');
@@ -143,8 +149,8 @@ export class Renderer {
       });
 
       // Check if we need to clip (for EPUB content cropping)
-      const clipX = (metadata as any).clipX;
-      const clipY = (metadata as any).clipY;
+      const clipX = metadata.clipX;
+      const clipY = metadata.clipY;
 
       let screenshotData: Buffer;
 

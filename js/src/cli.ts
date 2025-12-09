@@ -31,6 +31,7 @@ async function getUniqueOutputPath(basePath: string): Promise<string> {
   const stem = basename(basePath, ext);
 
   let counter = 1;
+  // eslint-disable-next-line no-constant-condition
   while (true) {
     const newPath = join(dir, `${stem} (${counter})${ext}`);
     try {
@@ -53,7 +54,7 @@ program
   .option('-w, --width <width>', 'Viewport width')
   .option('-H, --height <height>', 'Viewport height')
   .option('-p, --page <page>', 'Page number for multi-page documents', '1')
-  .action(async (input: string, options: any) => {
+  .action(async (input: string, options: { format: 'png' | 'jpeg' | 'webp'; width?: string; height?: string; page: string }) => {
     try {
       // Check input file exists and detect format
       let inputData: Buffer;
