@@ -53,8 +53,9 @@ program
   .option('-f, --format <format>', 'Output image format (png, jpeg, webp)', 'png')
   .option('-w, --width <width>', 'Viewport width')
   .option('-H, --height <height>', 'Viewport height')
+  .option('-o, --output <path>', 'Output file path (default: same folder as input)')
   .option('-p, --page <page>', 'Page number for multi-page documents', '1')
-  .action(async (input: string, options: { format: 'png' | 'jpeg' | 'webp'; width?: string; height?: string; page: string }) => {
+  .action(async (input: string, options: { format: 'png' | 'jpeg' | 'webp'; width?: string; height?: string; output?: string; page: string }) => {
     try {
       // Check input file exists and detect format
       let inputData: Buffer;
@@ -71,11 +72,16 @@ program
         process.exit(1);
       }
 
-      // Determine output path (same folder as input, with unique name)
-      const dir = dirname(input);
-      const stem = basename(input, extname(input));
-      const baseOutput = join(dir, `${stem}.${options.format}`);
-      const outputPath = await getUniqueOutputPath(baseOutput);
+      // Determine output path
+      let outputPath: string;
+      if (options.output) {
+        outputPath = options.output;
+      } else {
+        const dir = dirname(input);
+        const stem = basename(input, extname(input));
+        const baseOutput = join(dir, `${stem}.${options.format}`);
+        outputPath = await getUniqueOutputPath(baseOutput);
+      }
 
       console.log(`Converting ${input}...`);
 

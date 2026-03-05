@@ -52,6 +52,10 @@ def main():
         help="Viewport height",
     )
     parser.add_argument(
+        "-o", "--output",
+        help="Output file path (default: same folder as input)",
+    )
+    parser.add_argument(
         "-p", "--page",
         type=int,
         default=1,
@@ -79,9 +83,12 @@ def main():
             print(f"Error: Unsupported file format: {args.input}", file=sys.stderr)
             sys.exit(1)
 
-        # Determine output path (same folder as input, with unique name)
-        base_output = input_path.with_suffix(f".{args.format}")
-        output_path = get_unique_output_path(base_output)
+        # Determine output path
+        if args.output:
+            output_path = Path(args.output)
+        else:
+            base_output = input_path.with_suffix(f".{args.format}")
+            output_path = get_unique_output_path(base_output)
 
         print(f"Converting {args.input}...")
 
