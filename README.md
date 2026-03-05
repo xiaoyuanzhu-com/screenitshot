@@ -43,7 +43,21 @@ Inspired by [MarkItDown](https://github.com/microsoft/markitdown).
 ```bash
 uvx screenitshot document.pdf
 # outputs document.png in the same folder
+
+uvx screenitshot document.pdf -o output.png
+# outputs to specified path
 ```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `-o`, `--output` | Output file path (default: same folder as input) |
+| `-f`, `--format` | Output image format: `png`, `jpeg`, `webp` (default: `png`) |
+| `-w`, `--width` | Viewport width |
+| `-H`, `--height` | Viewport height |
+| `-p`, `--page` | Page number for multi-page documents (default: `1`) |
+| `-v`, `--version` | Show version |
 
 ### Package Usage
 
