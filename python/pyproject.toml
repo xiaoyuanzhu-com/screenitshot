@@ -1,6 +1,6 @@
 [project]
 name = "screenitshot"
-version = "0.7.5"
+version = "0.7.6"
 description = "Convert various file formats to high-quality screenshots"
 requires-python = ">=3.8"
 license = {text = "MIT"}
