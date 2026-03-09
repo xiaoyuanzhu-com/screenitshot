@@ -38,14 +38,22 @@ Inspired by [MarkItDown](https://github.com/microsoft/markitdown).
 
 ## Quick Start
 
-### CLI Usage
+### Python CLI
 
 ```bash
-uvx screenitshot document.pdf
-# outputs document.png in the same folder
+# One-time setup (browsers are cached globally, only needed once)
+pip install screenitshot
+playwright install chromium
 
-uvx screenitshot document.pdf -o output.png
-# outputs to specified path
+# Run
+screenitshot document.pdf
+# outputs document.png in the same folder
+```
+
+Or with `uvx` (no install needed, but still requires the one-time browser setup):
+```bash
+pip install playwright && playwright install chromium  # one-time
+uvx screenitshot document.pdf
 ```
 
 **Options:**
@@ -59,7 +67,21 @@ uvx screenitshot document.pdf -o output.png
 | `-p`, `--page` | Page number for multi-page documents (default: `1`) |
 | `-v`, `--version` | Show version |
 
-### Package Usage
+### Node.js CLI
+
+Chromium is downloaded automatically on install:
+
+```bash
+npm install -g screenitshot
+screenitshot document.pdf
+```
+
+### Python Package
+
+```bash
+pip install screenitshot
+playwright install chromium
+```
 
 ```python
 from screenitshot import screenshot
@@ -71,11 +93,17 @@ with open('output.png', 'wb') as f:
     f.write(result.data)
 ```
 
-### Installation
+### Node.js Package
 
 ```bash
-pip install screenitshot
+npm install screenitshot
 ```
+
+```js
+import { screenshot } from 'screenitshot';
+```
+
+---
 
 ## Documentation
 

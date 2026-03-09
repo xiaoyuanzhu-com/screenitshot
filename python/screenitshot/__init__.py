@@ -280,7 +280,15 @@ async def render_async(
     initial_height = height or 600
 
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
+        try:
+            browser = await p.chromium.launch(headless=True)
+        except Exception as e:
+            msg = str(e)
+            if "Executable doesn't exist" in msg or "playwright install" in msg:
+                raise ScreenitshotError(
+                    "Playwright browser not found. Run: playwright install chromium"
+                ) from e
+            raise
 
         try:
             # Use deviceScaleFactor for high-quality rendering (2x = retina quality)

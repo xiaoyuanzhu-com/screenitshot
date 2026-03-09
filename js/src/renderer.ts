@@ -69,9 +69,20 @@ export class Renderer {
     const initialHeight = height || 600;
 
     // Launch browser
-    const browser = await chromium.launch({
-      headless: true,
-    });
+    let browser;
+    try {
+      browser = await chromium.launch({
+        headless: true,
+      });
+    } catch (error) {
+      const err = error as Error;
+      if (err.message.includes("Executable doesn't exist") || err.message.includes('playwright install')) {
+        throw new Error(
+          'Playwright browser not found. Run: npx playwright install chromium'
+        );
+      }
+      throw error;
+    }
 
     try {
       // Use deviceScaleFactor for high-quality rendering (2x = retina quality)
