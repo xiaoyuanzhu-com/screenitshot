@@ -100,6 +100,9 @@ export async function detectFormat(filePath: string): Promise<FileFormat> {
     '.geojson': 'geojson',
     // GPX extension
     '.gpx': 'gpx',
+    // HEIC/HEIF image extensions
+    '.heic': 'heic',
+    '.heif': 'heic',
   };
 
   if (ext in extensionMap) {
@@ -113,6 +116,15 @@ export async function detectFormat(filePath: string): Promise<FileFormat> {
 
     if (magic === '25504446') return 'pdf';  // %PDF
     if (buffer.slice(0, 2).toString() === 'PK') return 'epub';  // ZIP-based
+
+    // HEIC/HEIF: ISO BMFF container with 'ftyp' box at bytes 4-7,
+    // brand at bytes 8-11. Common HEIC brands: heic, heix, mif1, msf1, heim, heis, hevc, hevx
+    if (buffer.length >= 12 && buffer.slice(4, 8).toString() === 'ftyp') {
+      const brand = buffer.slice(8, 12).toString();
+      if (['heic', 'heix', 'mif1', 'msf1', 'heim', 'heis', 'hevc', 'hevx'].includes(brand)) {
+        return 'heic';
+      }
+    }
   } catch {
     // Ignore read errors
   }

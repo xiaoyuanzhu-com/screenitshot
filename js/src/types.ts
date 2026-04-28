@@ -22,7 +22,7 @@ export interface RenderMetadata {
   scale: number;
 }
 
-export type FileFormat = 'pdf' | 'epub' | 'docx' | 'xlsx' | 'pptx' | 'md' | 'html' | 'csv' | 'rtf' | 'ipynb' | 'tex' | 'code' | 'url' | 'mmd' | 'geojson' | 'gpx' | 'unknown';
+export type FileFormat = 'pdf' | 'epub' | 'docx' | 'xlsx' | 'pptx' | 'md' | 'html' | 'csv' | 'rtf' | 'ipynb' | 'tex' | 'code' | 'url' | 'mmd' | 'geojson' | 'gpx' | 'heic' | 'unknown';
 
 // Mapping from MIME types to FileFormat
 export const MIME_TO_FORMAT: Record<string, FileFormat> = {
@@ -41,6 +41,10 @@ export const MIME_TO_FORMAT: Record<string, FileFormat> = {
   'text/x-tex': 'tex',
   'application/geo+json': 'geojson',
   'application/gpx+xml': 'gpx',
+  'image/heic': 'heic',
+  'image/heif': 'heic',
+  'image/heic-sequence': 'heic',
+  'image/heif-sequence': 'heic',
 };
 
 // Mapping from slug names to FileFormat
@@ -66,6 +70,8 @@ export const SLUG_TO_FORMAT: Record<string, FileFormat> = {
   'mermaid': 'mmd',
   'geojson': 'geojson',
   'gpx': 'gpx',
+  'heic': 'heic',
+  'heif': 'heic',
 };
 
 /**

@@ -25,6 +25,7 @@ export class Renderer {
       mmd: resolve(__dirname, '../templates/mmd.html'),
       geojson: resolve(__dirname, '../templates/geojson.html'),
       gpx: resolve(__dirname, '../templates/gpx.html'),
+      heic: resolve(__dirname, '../templates/heic.html'),
       unknown: '',
     };
 
@@ -39,15 +40,19 @@ export class Renderer {
     page: Page,
     fileBase64: string,
     pageNumber: number = 1,
-    fileName: string = ''
+    fileName: string = '',
+    requestedWidth: number = 0,
+    requestedHeight: number = 0
   ): Promise<void> {
     // Inject data into page globals before template loads
-    await page.addInitScript(({ fileBase64: fb64, pageNum, fName }: { fileBase64: string; pageNum: number; fName: string }) => {
+    await page.addInitScript(({ fileBase64: fb64, pageNum, fName, reqW, reqH }: { fileBase64: string; pageNum: number; fName: string; reqW: number; reqH: number }) => {
       // Override the placeholder values
       (globalThis as unknown as Record<string, unknown>).fileBase64 = fb64;
       (globalThis as unknown as Record<string, unknown>).pageNumber = pageNum;
       (globalThis as unknown as Record<string, unknown>).fileName = fName;
-    }, { fileBase64, pageNum: pageNumber, fName: fileName });
+      (globalThis as unknown as Record<string, unknown>).requestedWidth = reqW;
+      (globalThis as unknown as Record<string, unknown>).requestedHeight = reqH;
+    }, { fileBase64, pageNum: pageNumber, fName: fileName, reqW: requestedWidth, reqH: requestedHeight });
   }
 
   async render(
@@ -85,8 +90,11 @@ export class Renderer {
     }
 
     try {
-      // Use deviceScaleFactor for high-quality rendering (2x = retina quality)
-      const deviceScaleFactor = 2;
+      // For image formats (e.g. HEIC) we want exact pixel output: the page
+      // decodes to a canvas at the desired output size and we capture 1:1.
+      // For document formats we use 2x (retina) so vector content stays crisp.
+      const isImageFormat = format === 'heic';
+      const deviceScaleFactor = isImageFormat ? 1 : 2;
 
       const page = await browser.newPage({
         viewport: { width: initialWidth, height: initialHeight },
@@ -135,7 +143,7 @@ export class Renderer {
       }
 
       // Inject data before loading template
-      await this.injectDataIntoPage(page, fileBase64, pageNumber, fileName);
+      await this.injectDataIntoPage(page, fileBase64, pageNumber, fileName, width || 0, height || 0);
 
       // Load template
       const templatePath = this.getTemplatePath(format);

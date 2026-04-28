@@ -34,6 +34,7 @@ Inspired by [MarkItDown](https://github.com/microsoft/markitdown).
 | `.mmd` (Mermaid) | [mermaid.js](https://github.com/mermaid-js/mermaid) | ✅ |
 | `.geojson` | [MapLibre GL JS](https://github.com/maplibre/maplibre-gl-js) | ✅ |
 | `.gpx` | [MapLibre GL JS](https://github.com/maplibre/maplibre-gl-js) + [@tmcw/togeojson](https://github.com/placemark/togeojson) | ✅ |
+| `.heic`, `.heif` | [libheif-js](https://github.com/catdad-experiments/libheif-js) | ✅ |
 
 
 ## Quick Start
